@@ -13,6 +13,7 @@ apply plugin: 'android-maven'
 apply plugin: 'signing'
 
 dependencies {
+    compile 'com.google.guava:guava:17.0'
     compile fileTree(dir: 'libs', include: ['*.jar'])
 }
 
@@ -93,7 +94,7 @@ uploadArchives {
             }
 
             pom.project {
-                name 'Android Slideshow Widget'
+                name 'Android SlideShow Widget'
                 artifactId 'android-slideshow-widget'
                 packaging 'aar'
                 description 'A set of widgets to create smooth slideshows with ease.'
