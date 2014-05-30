@@ -1,6 +1,7 @@
 package com.marvinlabs.widget.slideshow.demo;
 
 import android.app.Activity;
+import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -8,12 +9,14 @@ import android.view.Window;
 import android.view.WindowManager;
 
 import com.marvinlabs.widget.slideshow.SlideShowView;
-import com.marvinlabs.widget.slideshow.adapter.SimpleImageResourceAdapter;
+import com.marvinlabs.widget.slideshow.adapter.ResourceBitmapAdapter;
+import com.marvinlabs.widget.slideshow.transition.SlideAndZoomTransitionFactory;
 
 
 public class SlideShowActivity extends Activity {
 
     private SlideShowView slideShowView;
+    private ResourceBitmapAdapter adapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -27,6 +30,11 @@ public class SlideShowActivity extends Activity {
         setContentView(R.layout.activity_slideshow);
 
         slideShowView = (SlideShowView) findViewById(R.id.slideshow);
+
+        int[] slideResources = new int[]{R.raw.slide_01, R.raw.slide_02, R.raw.slide_03, R.raw.slide_04};
+        BitmapFactory.Options opts = new BitmapFactory.Options();
+        opts.inSampleSize = 2;
+        adapter = new ResourceBitmapAdapter(this, slideResources, opts);
     }
 
     @Override
@@ -37,8 +45,8 @@ public class SlideShowActivity extends Activity {
 
     private void startSlideShow() {
         // A simple image slide show
-        int[] slideResources = new int[]{R.raw.slide_01, R.raw.slide_02, R.raw.slide_03, R.raw.slide_04};
-        slideShowView.setAdapter(new SimpleImageResourceAdapter(this, slideResources));
+        slideShowView.setTransitionFactory(new SlideAndZoomTransitionFactory());
+        slideShowView.setAdapter(adapter);
         slideShowView.play();
     }
 
