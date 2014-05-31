@@ -1,8 +1,17 @@
-Android SlideShow Widgets
-=========================
+Android SlideShow Widget
+========================
 
 A set of widgets to create smooth slide shows with ease. The slide show components are fully 
 customizable and are not limited to pictures, you can slide whatever you want to (texts, etc.).
+
+## Demo
+
+A demo of the widget is worth a thousand words. You can download it for free on Google Play.
+
+<a href="https://play.google.com/store/apps/details?id=com.marvinlabs.widget.slideshow.demo">
+  <img alt="Demo on Google Play"
+         src="http://developer.android.com/images/brand/en_generic_rgb_wo_60.png" />
+</a>
 
 ## Usage
 
@@ -12,7 +21,7 @@ The easiest way to get the library included in your project is by using Gradle. 
 following line to your dependencies block:
 
     dependencies {
-        compile 'com.marvinlabs:android-slideshow-widgets:1.0.+@aar'
+        compile 'com.marvinlabs:android-slideshow-widget:0.1.+@aar'
     }
     
 Of course, you can replace the version number by whichever version you need (you can have a look at 
@@ -100,11 +109,12 @@ get updates about our work, you can also:
 
 ## Change log
 
-### 1.0.0 (2014-05-30)
+### 0.1.0 (2014-05-31)
 
+  - First release (beta)
   - SlideShowView widget to play a slide show
   - SlideTransitionFactory to customize the transitions between slides (with 2 default 
     implementations)
-  - PlayList to customize the order and duration of slides (with 2 default implementations)
+  - PlayList to customize the order and duration of slides (with 1 default implementations)
   - SlideShowAdapter to bind slide data to actual view widgets (with 2 default implementations)
   - Demo application
