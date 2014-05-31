@@ -7,9 +7,8 @@ import android.os.AsyncTask;
 import android.util.Log;
 import android.util.SparseArray;
 
-import com.google.common.collect.Lists;
-
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
@@ -56,7 +55,7 @@ public class RemoteBitmapAdapter extends BitmapAdapter {
     public RemoteBitmapAdapter(Context context, Collection<String> slideUrls, BitmapFactory.Options bitmapFactoryOptions) {
         super(context);
         this.bitmapFactoryOptions = bitmapFactoryOptions;
-        this.slideUrls = Lists.newArrayList(slideUrls);
+        this.slideUrls = new ArrayList<String>(slideUrls);
         this.runningTasks = new SparseArray<DownloadImageTask>(5);
     }
 

@@ -4,13 +4,47 @@ Android SlideShow Widgets
 A set of widgets to create smooth slide shows with ease. The slide show components are fully 
 customizable and are not limited to pictures, you can slide whatever you want to (texts, etc.).
 
-## Components
+## Usage
 
-### SlideShowView
+### Including the library
 
-This is our widget to display the slide show. That widget offers convenient defaults to play a nice 
-slide show. You will simply need to give it an adapter to describe the slides and how to display 
-them.
+The easiest way to get the library included in your project is by using Gradle. Simply add the 
+following line to your dependencies block:
+
+    dependencies {
+        compile 'com.marvinlabs:android-slideshow-widgets:1.0.+@aar'
+    }
+    
+Of course, you can replace the version number by whichever version you need (you can have a look at 
+this repository's tags to know which is the latest).
+
+### Getting a slide show in your fragment/activity
+
+To include a slide show in your layout, simply use the following XML code snippet:
+
+    <com.marvinlabs.widget.slideshow.SlideShowView
+        android:id="@+id/slideshow"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
+You can then get the `SlideShowView` using the usual technique:
+
+    slideShowView = (SlideShowView) findViewById(R.id.slideshow);
+
+The next step is to create the adapter that will bind your slide data to actual views. This is a 
+process very similar to what you do when working with the `ListView` widget. In this library, 
+we have a few base adapters to help you create picture slide shows easily from images in your
+application resources or from images on the Internet. The code would look like that:
+
+    adapter = new ResourceBitmapAdapter(this, new int[]{
+        R.raw.slide_01, R.raw.slide_02, R.raw.slide_03, R.raw.slide_04});
+
+Once your activity is ready, or inside an event handler like a button click method, you can then 
+start the slideshow:
+
+    slideShowView.play();
+
+## Customisable components
 
 ### SlideShowAdapter
 
@@ -19,8 +53,8 @@ This is the key component to bind your slide data with actual view widgets. Have
 
 To get you started with picture slide shows, we have created a few useful adapters:
 
-  - `SimpleImageResourceAdapter` will allow you to show a list of application resource drawables
-  - `RemoteImageResourceAdapter` will allow you to show a list of images that are loaded from the 
+  - `ResourceBitmapAdapter` will allow you to show a list of application resource drawables
+  - `RemoteBitmapAdapter` will allow you to show a list of images that are loaded from the 
     Internet.
    
 ### SlideTransitionFactory
@@ -31,7 +65,8 @@ whichever view animator you want.
 To make it easy for you, we already have a few default implementations that should cover most of 
 your needs:
  
-  - `FadeTransitionFactory` if you want your slides to fade
+  - `FadeTransitionFactory` if you want your slides to fade out and in
+  - `SlideAndZoomTransitionFactory` if you want your slides to slide ou left and then zoom in
   - `NoTransitionFactory`  if you want your slides to brutally show up
 
 ### PlayList
@@ -44,18 +79,6 @@ your needs:
 
   - `SequentialPlayList` will play slides in order with a common default duration
   - `RandomPlayList` will play slides in a random order with a common default duration
-
-## Usage
-
-The easiest way to get the library included in your project is by using Gradle. Simply add the 
-following line to your dependencies block:
-
-    dependencies {
-        compile 'com.marvinlabs:android-slideshow-widgets:1.0.+@aar'
-    }
-    
-Of course, you can replace the version number by whichever version you need (you can have a look at 
-this repository's tags to know which is the latest).
 
 ## About Vincent & MarvinLabs
 

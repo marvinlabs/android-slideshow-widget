@@ -23,6 +23,14 @@ public class SequentialPlayList implements PlayList {
     // Duration in ms for each slide
     private long slideDuration = DEFAULT_SLIDE_DURATION;
 
+    // TODO Allow changing the playlist direction
+//    private enum PlayOrder {
+//        FORWARD, REVERSE;
+//    }
+//
+//    // The order to play the slides
+//    private PlayOrder playOrder;
+
     //==============================================================================================
     // GENERAL METHODS
     //==
@@ -33,6 +41,11 @@ public class SequentialPlayList implements PlayList {
     //==============================================================================================
     // INTERFACE IMPLEMENTATION: PlayList
     //==
+
+    @Override
+    public int getFirstSlide() {
+        return slideCount > 0 ? 0 : -1;
+    }
 
     @Override
     public int getCurrentSlide() {

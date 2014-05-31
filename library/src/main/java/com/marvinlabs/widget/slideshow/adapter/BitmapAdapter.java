@@ -7,6 +7,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import android.widget.ImageView;
+import android.widget.RelativeLayout;
 
 import com.marvinlabs.widget.slideshow.SlideShowAdapter;
 
@@ -78,7 +79,7 @@ public abstract class BitmapAdapter extends BaseAdapter implements SlideShowAdap
     protected void onBitmapLoaded(int position, Bitmap bitmap) {
         BitmapCache bc = cachedBitmaps.get(position);
         if (bc != null) {
-            bc.status = bitmap == null ? SlideStatus.UNAVAILABLE : SlideStatus.READY;
+            bc.status = bitmap == null ? SlideStatus.NOT_AVAILABLE : SlideStatus.READY;
             bc.bitmap = new WeakReference<Bitmap>(bitmap);
         }
     }
@@ -91,7 +92,7 @@ public abstract class BitmapAdapter extends BaseAdapter implements SlideShowAdap
     protected void onBitmapNotAvailable(int position) {
         BitmapCache bc = cachedBitmaps.get(position);
         if (bc != null) {
-            bc.status = SlideStatus.UNAVAILABLE;
+            bc.status = SlideStatus.NOT_AVAILABLE;
             bc.bitmap = null;
         }
     }
@@ -108,6 +109,13 @@ public abstract class BitmapAdapter extends BaseAdapter implements SlideShowAdap
     protected ImageView newImageViewInstance() {
         ImageView iv = new ImageView(context);
         iv.setScaleType(ImageView.ScaleType.CENTER_CROP);
+
+        // SlideShowView is a subclass of RelativeLayout. Set the layout parameters accordingly
+        RelativeLayout.LayoutParams lp = new RelativeLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, RelativeLayout.LayoutParams.MATCH_PARENT);
+        lp.addRule(RelativeLayout.ALIGN_PARENT_TOP);
+        lp.addRule(RelativeLayout.ALIGN_PARENT_LEFT);
+        iv.setLayoutParams(lp);
+
         return iv;
     }
 
@@ -165,6 +173,6 @@ public abstract class BitmapAdapter extends BaseAdapter implements SlideShowAdap
     @Override
     public SlideStatus getSlideStatus(int position) {
         BitmapCache bc = cachedBitmaps.get(position);
-        return bc != null ? bc.status : SlideStatus.UNAVAILABLE;
+        return bc != null ? bc.status : SlideStatus.NOT_AVAILABLE;
     }
 }

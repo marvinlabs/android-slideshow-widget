@@ -13,6 +13,13 @@ public interface PlayList {
     public int getCurrentSlide();
 
     /**
+     * Get the index of the first slide to play
+     *
+     * @return -1 if there will be nothing to play. A positive integer otherwise.
+     */
+    public int getFirstSlide();
+
+    /**
      * Get the index of the next slide in the play list
      *
      * @return -1 if the next slide is not available. A positive integer otherwise.

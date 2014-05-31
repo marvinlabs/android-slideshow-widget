@@ -11,7 +11,7 @@ import android.widget.Adapter;
 public interface SlideShowAdapter extends Adapter {
 
     public enum SlideStatus {
-        READY, LOADING, UNAVAILABLE;
+        READY, LOADING, NOT_AVAILABLE;
     }
 
     /**

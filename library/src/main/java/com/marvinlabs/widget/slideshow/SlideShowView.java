@@ -10,24 +10,29 @@ import android.util.Log;
 import android.util.SparseArray;
 import android.view.View;
 import android.view.ViewPropertyAnimator;
-import android.widget.FrameLayout;
 import android.widget.ImageView;
+import android.widget.ProgressBar;
+import android.widget.RelativeLayout;
 
 import com.marvinlabs.widget.slideshow.playlist.SequentialPlayList;
 import com.marvinlabs.widget.slideshow.transition.FadeTransitionFactory;
-import com.marvinlabs.widget.slideshow.transition.NoTransitionFactory;
+
+import static com.marvinlabs.widget.slideshow.SlideShowAdapter.SlideStatus;
 
 /**
  * Created by Vincent Mimoun-Prat @ MarvinLabs on 28/05/2014.
  */
-public class SlideShowView extends FrameLayout {
+public class SlideShowView extends RelativeLayout {
 
     private enum Status {
         STOPPED, PAUSED, PLAYING;
     }
 
-    // The handle that will handle our timing job
+    // The handler that will handle our timing job
     private Handler slideHandler;
+
+    // The progress view shown when slides are loading
+    private View progressIndicator;
 
     // Whether or not the slideShow is currently playing
     private Status status = Status.STOPPED;
@@ -40,6 +45,9 @@ public class SlideShowView extends FrameLayout {
 
     // The transition maker between slides
     private SlideTransitionFactory transitionFactory = null;
+
+    // The number of slides we have automatically skipped
+    private int notAvailableSlidesSkipped = 0;
 
     // Watch the adapter data
     private DataSetObserver adapterObserver = new DataSetObserver() {
@@ -56,59 +64,37 @@ public class SlideShowView extends FrameLayout {
         }
     };
 
-    // Recycled views
+    // Recycled views for the adapter to reuse
     SparseArray<View> recycledViews;
 
-//    // A thread in charge of waiting for the current slide to be available before displaying it
-//    private Thread slideWaiterThread = null;
-//
-//    // Wait until next slide is available and display it
-//    // This runnable should be ran on a background thread!
-//    private Runnable showNextSlideWhenAvailable = new Runnable() {
-//        @Override
-//        public void run() {
-//            int slideIndex = playlist.getNextSlide();
-//            if (slideIndex < 0) {
-//                stop();
-//                return;
-//            }
-//
-//            SlideShowAdapter.SlideStatus status;
-//            while ((status = adapter.getSlideStatus(slideIndex)) == SlideShowAdapter.SlideStatus.LOADING) {
-//                try {
-//                    Thread.sleep(20);
-//                } catch (InterruptedException e) { /* Ignored */ }
-//            }
-//
-//            // If slide is available, show it, else skip it and move to next one
-//            if (status == SlideShowAdapter.SlideStatus.READY) {
-//                playlist.next();
-//                slideHandler.removeCallbacks(displayCurrentSlide);
-//                slideHandler.post(displayCurrentSlide);
-//            } else {
-//                next();
-//            }
-//        }
-//    };
-//
-//    // Display the next slide. This should be ran on the UI thread.
-//    private Runnable displayCurrentSlide = new Runnable() {
-//        @Override
-//        public void run() {
-//            displaySlide(playlist.getCurrentSlide());
-//        }
-//    };
+    // Wait for the current slide to finish loading
+    private Runnable waitForCurrentSlide = new Runnable() {
+        @Override
+        public void run() {
+            final PlayList pl = getPlaylist();
+            final SlideStatus status = adapter.getSlideStatus(pl.getCurrentSlide());
 
-    // Simply show the next slide (for use with slideHandle.postDelayed)
+            switch (status) {
+                case LOADING:
+                    slideHandler.postDelayed(this, 100);
+                    break;
+
+                default:
+                    playCurrentSlide();
+            }
+        }
+    };
+
+    // Simply show the next slide (for use with slideHandler.postDelayed)
     private Runnable moveToNextSlide = new Runnable() {
         @Override
         public void run() {
-            Log.d("SlideShowView", "Automatically moving to next slide");
             next();
         }
     };
 
-    // VIEW LIFECYCLE METHODS
+    //==============================================================================================
+    // GENERAL METHODS
     //==
 
     public SlideShowView(Context context) {
@@ -131,6 +117,10 @@ public class SlideShowView extends FrameLayout {
         recycledViews = new SparseArray<View>();
     }
 
+    //==============================================================================================
+    // VIEW LIFECYCLE METHODS
+    //==
+
     @Override
     protected void onAttachedToWindow() {
         super.onAttachedToWindow();
@@ -138,10 +128,31 @@ public class SlideShowView extends FrameLayout {
 
     @Override
     protected void onDetachedFromWindow() {
+        slideHandler.removeCallbacksAndMessages(null);
         if (this.adapter != null) {
             this.adapter.unregisterDataSetObserver(adapterObserver);
         }
         super.onDetachedFromWindow();
+    }
+
+    @Override
+    protected void onFinishInflate() {
+        // Check if we have a progress indicator as a child, if not, create one
+        progressIndicator = findViewById(R.id.progress_indicator);
+        if (progressIndicator == null) {
+            ProgressBar pb = new ProgressBar(getContext(), null, android.R.attr.progressBarStyleHorizontal);
+            pb.setIndeterminate(true);
+            LayoutParams lp = new LayoutParams(RelativeLayout.LayoutParams.MATCH_PARENT, RelativeLayout.LayoutParams.WRAP_CONTENT);
+            lp.addRule(RelativeLayout.ALIGN_PARENT_BOTTOM);
+            lp.addRule(RelativeLayout.ALIGN_PARENT_LEFT);
+            pb.setLayoutParams(lp);
+
+            progressIndicator = pb;
+        } else {
+            removeView(progressIndicator);
+        }
+
+        super.onFinishInflate();
     }
 
     /**
@@ -153,6 +164,7 @@ public class SlideShowView extends FrameLayout {
         }
     }
 
+    //==============================================================================================
     // DATA HANDLING METHODS
     //==
 
@@ -181,9 +193,12 @@ public class SlideShowView extends FrameLayout {
             PlayList pl = getPlaylist();
             pl.onSlideCountChanged(adapter.getCount());
             pl.rewind();
+
+            prepareSlide(pl.getFirstSlide());
         }
     }
 
+    //==============================================================================================
     // ANIMATION-RELATED METHODS
     //==
 
@@ -198,6 +213,7 @@ public class SlideShowView extends FrameLayout {
         this.transitionFactory = transitionFactory;
     }
 
+    //==============================================================================================
     // SLIDESHOW CONTROL METHODS
     //==
 
@@ -240,21 +256,8 @@ public class SlideShowView extends FrameLayout {
      * Move to the next slide
      */
     public void next() {
-        final PlayList pl = getPlaylist();
-        int currentSlide = pl.next();
-        if (currentSlide < 0) {
-            stop();
-            return;
-        }
-
-        displaySlide(currentSlide);
-
-        // Schedule next slide
-        slideHandler.removeCallbacks(moveToNextSlide);
-        slideHandler.postDelayed(moveToNextSlide, pl.getSlideDuration(currentSlide));
-
-        // We are playing the slide show!
-        status = Status.PLAYING;
+        getPlaylist().next();
+        playCurrentSlide();
     }
 
     /**
@@ -266,38 +269,115 @@ public class SlideShowView extends FrameLayout {
         // Remove all callbacks
         slideHandler.removeCallbacksAndMessages(null);
 
+        // TODO Use the out transition to hide the current view
         // Hide all visible views
         removeAllViews();
     }
 
+    /**
+     * Play the current slide in the playlist if it is ready. If that slide is not available, we
+     * move to the next one. If that slide is loading, we wait until it is ready and then we play
+     * it.
+     */
+    protected void playCurrentSlide() {
+        final PlayList pl = getPlaylist();
+        final int position = pl.getCurrentSlide();
+        final SlideStatus slideStatus = adapter.getSlideStatus(position);
+
+        // Don't play anything if we have reached the end
+        if (position<0) {
+            stop();
+            return;
+        }
+
+        // Stop anything planned
+        slideHandler.removeCallbacksAndMessages(null);
+
+        // If the slide is ready, then we can display it straight away
+        switch (slideStatus) {
+            case READY:
+                notAvailableSlidesSkipped = 0;
+
+                // We are playing the slide show!
+                status = Status.PLAYING;
+
+                // Schedule next slide
+                slideHandler.postDelayed(moveToNextSlide, pl.getSlideDuration(position));
+
+                // Display the slide
+                displayCurrentSlide();
+
+                break;
+
+            case NOT_AVAILABLE:
+                Log.w("SlideShowView", "Slide is not available: " + position);
+
+                // Stop if we have already skipped all slides
+                ++notAvailableSlidesSkipped;
+                if (notAvailableSlidesSkipped<adapter.getCount()) {
+                    prepareSlide(pl.getNextSlide());
+                    next();
+                } else {
+                    Log.w("SlideShowView", "Skipped too many slides in a row. Stopping playback.");
+                    stop();
+                }
+                break;
+
+            case LOADING:
+                Log.d("SlideShowView", "Slide is not yet ready, waiting for it: " + position);
+
+                // Show an indicator to the user
+                showProgressIndicator();
+
+                // Start waiting for the slide to be available
+                slideHandler.post(waitForCurrentSlide);
+
+                break;
+        }
+
+        // Slide is loading, we show the progress indicator and wait for it before making the
+        // transition
+
+    }
+
+    /**
+     * Prepare the given slide for playback. Basically a safe wrapper around
+     * SlideShowAdapter#prepareSlide
+     *
+     * @param position The index of the slide to prepare
+     */
+    private void prepareSlide(int position) {
+        if (adapter != null && position>=0) {
+            adapter.prepareSlide(position);
+        }
+    }
+
+    //==============================================================================================
     // VIEW HANDLING METHODS
     //==
 
     /**
      * Display the view for the given slide, launching the appropriate transitions if available
-     *
-     * @param position
      */
-    private void displaySlide(int position) {
-        // Ignore invalid positions
-        if (position < 0 || position >= adapter.getCount()) {
-            Log.w("SlideShowView", "Requesting to show an invalid slide at position: " + position);
-            return;
-        }
+    private void displayCurrentSlide() {
+        final PlayList pl = getPlaylist();
+        final int currentPosition = pl.getCurrentSlide();
+        final int previousPosition = pl.getPreviousSlide();
 
-        Log.d("SlideShowView", "-----------------------------------");
-        Log.d("SlideShowView", "Displaying slide at position: " + position);
+        Log.v("SlideShowView", "Displaying slide at position: " + currentPosition);
+
+        // Hide the progress indicator
+        hideProgressIndicator();
 
         // Add the slide view to our hierarchy
-        final View inView = getSlideView(position);
+        final View inView = getSlideView(currentPosition);
         inView.setVisibility(View.INVISIBLE);
         addView(inView);
 
         // Transition between current and new slide
         final SlideTransitionFactory tf = getTransitionFactory();
-        final int previousSlidePosition = playlist.getPreviousSlide();
 
-        final ViewPropertyAnimator inAnimator = tf.getInAnimator(inView, this, previousSlidePosition, position);
+        final ViewPropertyAnimator inAnimator = tf.getInAnimator(inView, this, previousPosition, currentPosition);
         if (inAnimator != null) {
             inAnimator.setListener(new AnimatorListenerAdapter() {
                 @Override
@@ -312,18 +392,18 @@ public class SlideShowView extends FrameLayout {
         int childCount = getChildCount();
         if (childCount > 1) {
             final View outView = getChildAt(0);
-            final ViewPropertyAnimator outAnimator = tf.getOutAnimator(outView, this, previousSlidePosition, position);
+            final ViewPropertyAnimator outAnimator = tf.getOutAnimator(outView, this, previousPosition, currentPosition);
             if (outAnimator != null) {
                 outAnimator.setListener(new AnimatorListenerAdapter() {
                     @Override
                     public void onAnimationEnd(Animator animation) {
                         outView.setVisibility(View.INVISIBLE);
-                        recyclePreviousSlideView(previousSlidePosition, outView);
+                        recyclePreviousSlideView(previousPosition, outView);
                     }
                 }).start();
             } else {
                 outView.setVisibility(View.INVISIBLE);
-                recyclePreviousSlideView(previousSlidePosition, outView);
+                recyclePreviousSlideView(previousPosition, outView);
             }
         }
     }
@@ -347,7 +427,7 @@ public class SlideShowView extends FrameLayout {
         view.destroyDrawingCache();
 
         if (view instanceof ImageView) {
-            ((ImageView)view).setImageDrawable(null);
+            ((ImageView) view).setImageDrawable(null);
         }
 
         Log.d("SlideShowView", "View added to recycling bin: " + view);
@@ -356,11 +436,21 @@ public class SlideShowView extends FrameLayout {
         adapter.discardSlide(position);
 
         // The adapter can prepare the next slide
-        final int nextSlideIndex = getPlaylist().getNextSlide();
-        if (nextSlideIndex >= 0) {
-            adapter.prepareSlide(nextSlideIndex);
-        }
+        prepareSlide(getPlaylist().getNextSlide());
     }
 
+    //==============================================================================================
+    // PROGRESS METHODS
+    //==
+
+    protected void showProgressIndicator() {
+        progressIndicator.setAlpha(0);
+        addView(progressIndicator);
+        progressIndicator.animate().alpha(1).setDuration(500).start();
+    }
+
+    protected void hideProgressIndicator() {
+        removeView(progressIndicator);
+    }
 
 }
