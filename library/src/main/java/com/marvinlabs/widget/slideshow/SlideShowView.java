@@ -8,6 +8,7 @@ import android.os.Handler;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.util.SparseArray;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewPropertyAnimator;
 import android.widget.ImageView;
@@ -22,7 +23,7 @@ import static com.marvinlabs.widget.slideshow.SlideShowAdapter.SlideStatus;
 /**
  * Created by Vincent Mimoun-Prat @ MarvinLabs on 28/05/2014.
  */
-public class SlideShowView extends RelativeLayout {
+public class SlideShowView extends RelativeLayout implements View.OnClickListener{
 
     private enum Status {
         STOPPED, PAUSED, PLAYING;
@@ -48,6 +49,9 @@ public class SlideShowView extends RelativeLayout {
 
     // The number of slides we have automatically skipped
     private int notAvailableSlidesSkipped = 0;
+
+    // The item click listener
+    private OnSlideClickListener slideClickListener;
 
     // Watch the adapter data
     private DataSetObserver adapterObserver = new DataSetObserver() {
@@ -115,6 +119,8 @@ public class SlideShowView extends RelativeLayout {
     private void initialise() {
         slideHandler = new Handler();
         recycledViews = new SparseArray<View>();
+        setClickable(true);
+        setOnClickListener(this);
     }
 
     //==============================================================================================
@@ -453,4 +459,26 @@ public class SlideShowView extends RelativeLayout {
         removeView(progressIndicator);
     }
 
+    //==============================================================================================
+    // INTERACTION METHODS
+    //==
+
+    public interface OnSlideClickListener {
+        public void onItemClick(int position, SlideShowAdapter adapter);
+    }
+
+    @Override
+    public void onClick(View view) {
+        if(slideClickListener != null) {
+            slideClickListener.onItemClick(playlist.getCurrentSlide(), adapter);
+        }
+    }
+
+    public OnSlideClickListener getSlideClickListener() {
+        return slideClickListener;
+    }
+
+    public void setSlideClickListener(OnSlideClickListener slideClickListener) {
+        this.slideClickListener = slideClickListener;
+    }
 }
