@@ -11,15 +11,28 @@ public class SequentialPlayList implements PlayList {
 
     public static final long DEFAULT_SLIDE_DURATION = 5000;
 
+    // The number of slides in the playlist
     private int slideCount = 0;
+
+    // The slide currently being played
     private int currentSlide = -1;
+
+    // Shall we loop after we have reached the last slide?
     private boolean isLooping = true;
 
     // Duration in ms for each slide
     private long slideDuration = DEFAULT_SLIDE_DURATION;
 
+    //==============================================================================================
+    // GENERAL METHODS
+    //==
+
     public SequentialPlayList() {
     }
+
+    //==============================================================================================
+    // INTERFACE IMPLEMENTATION: PlayList
+    //==
 
     @Override
     public int getCurrentSlide() {
@@ -64,6 +77,10 @@ public class SequentialPlayList implements PlayList {
             currentSlide = this.slideCount - 1;
         }
     }
+
+    //==============================================================================================
+    // PLAYLIST CONTROL
+    //==
 
     @Override
     public long getSlideDuration(int position) {

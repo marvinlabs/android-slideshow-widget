@@ -28,8 +28,15 @@ public abstract class BitmapAdapter extends BaseAdapter implements SlideShowAdap
         WeakReference<Bitmap> bitmap = null;
     }
 
+    // The context in which the adapter was created
     private Context context;
+
+    // Dictionary of bitmaps which have already been loaded
     private SparseArray<BitmapCache> cachedBitmaps;
+
+    //==============================================================================================
+    // GENERAL METHODS
+    //==
 
     /**
      * Constructor
@@ -40,6 +47,19 @@ public abstract class BitmapAdapter extends BaseAdapter implements SlideShowAdap
         this.context = context;
         this.cachedBitmaps = new SparseArray<BitmapCache>(3);
     }
+
+    /**
+     * Get the main context
+     *
+     * @return The context in which the adapter was created
+     */
+    public Context getContext() {
+        return context;
+    }
+
+    //==============================================================================================
+    // BITMAP LOADING
+    //==
 
     /**
      * Load the bitmap for the item at the given position. When the bitmap is loaded, this function
@@ -76,6 +96,10 @@ public abstract class BitmapAdapter extends BaseAdapter implements SlideShowAdap
         }
     }
 
+    //==============================================================================================
+    // INTERFACE IMPLEMENTATION: Adapter
+    //==
+
     /**
      * Create the ImageView that will be used to show the bitmap.
      *
@@ -110,6 +134,10 @@ public abstract class BitmapAdapter extends BaseAdapter implements SlideShowAdap
         return iv;
     }
 
+    //==============================================================================================
+    // INTERFACE IMPLEMENTATION: SlideShowAdapter
+    //==
+
     @Override
     public void prepareSlide(int position) {
         BitmapCache bc = cachedBitmaps.get(position);
@@ -138,14 +166,5 @@ public abstract class BitmapAdapter extends BaseAdapter implements SlideShowAdap
     public SlideStatus getSlideStatus(int position) {
         BitmapCache bc = cachedBitmaps.get(position);
         return bc != null ? bc.status : SlideStatus.UNAVAILABLE;
-    }
-
-    /**
-     * Get the main context
-     *
-     * @return The context in which the adapter was created
-     */
-    public Context getContext() {
-        return context;
     }
 }

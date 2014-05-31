@@ -11,8 +11,15 @@ import android.graphics.BitmapFactory;
  */
 public class ResourceBitmapAdapter extends BitmapAdapter {
 
+    // The options to pass to the BitmapFactory used to decode the bitmaps
     private BitmapFactory.Options bitmapFactoryOptions;
+
+    // The resource IDs of the images to load
     private int[] slideImageIds;
+
+    //==============================================================================================
+    // GENERAL METHODS
+    //==
 
     /**
      * Constructor
@@ -38,6 +45,10 @@ public class ResourceBitmapAdapter extends BitmapAdapter {
         this.slideImageIds = slideImageIds;
     }
 
+    //==============================================================================================
+    // INTERFACE IMPLEMENTATION: Adapter
+    //==
+
     @Override
     public int getCount() {
         return slideImageIds.length;
@@ -52,6 +63,10 @@ public class ResourceBitmapAdapter extends BitmapAdapter {
     public long getItemId(int position) {
         return slideImageIds[position];
     }
+
+    //==============================================================================================
+    // BITMAP LOADING
+    //==
 
     @Override
     protected void loadBitmap(int position) {

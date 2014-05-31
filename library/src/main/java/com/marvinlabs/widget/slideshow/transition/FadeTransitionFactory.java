@@ -10,24 +10,79 @@ import com.marvinlabs.widget.slideshow.SlideTransitionFactory;
 
 /**
  * A transition maker to fade the slides in and out
- *
+ * <p/>
  * Created by Vincent Mimoun-Prat @ MarvinLabs on 28/05/2014.
  */
 public class FadeTransitionFactory implements SlideTransitionFactory {
 
     private static final long DEFAULT_DURATION = 500;
 
+    // Duration for the transition in ms
     private long duration = DEFAULT_DURATION;
+
+    // Interpolator to use for the transition
     private Interpolator interpolator;
 
+    //==============================================================================================
+    // GENERAL METHODS
+    //==
+
+    /**
+     * Default constuctor
+     */
     public FadeTransitionFactory() {
         this(DEFAULT_DURATION);
     }
 
+    /**
+     * Constructor
+     *
+     * @param duration Duration for the transition in ms
+     */
     public FadeTransitionFactory(long duration) {
         this.duration = duration;
         this.interpolator = new AccelerateDecelerateInterpolator();
     }
+
+    /**
+     * Get the transition duration
+     *
+     * @return duration in ms
+     */
+    public long getDuration() {
+        return duration;
+    }
+
+    /**
+     * Set the transition duration
+     *
+     * @param duration duration in ms
+     */
+    public void setDuration(long duration) {
+        this.duration = duration;
+    }
+
+    /**
+     * Get the interpolator used for the transitions
+     *
+     * @return the interpolator
+     */
+    public Interpolator getInterpolator() {
+        return interpolator;
+    }
+
+    /**
+     * Set the interpolator used for the transitions
+     *
+     * @param interpolator the interpolator
+     */
+    public void setInterpolator(Interpolator interpolator) {
+        this.interpolator = interpolator;
+    }
+
+    //==============================================================================================
+    // INTERFACE IMPLEMENTATION: SlideTransitionFactory
+    //==
 
     @Override
     public ViewPropertyAnimator getInAnimator(View target, SlideShowView parent, int fromSlide, int toSlide) {
@@ -39,13 +94,5 @@ public class FadeTransitionFactory implements SlideTransitionFactory {
     public ViewPropertyAnimator getOutAnimator(View target, SlideShowView parent, int fromSlide, int toSlide) {
         target.setAlpha(1);
         return target.animate().setDuration(getDuration()).setInterpolator(interpolator).alpha(0);
-    }
-
-    public long getDuration() {
-        return duration;
-    }
-
-    public void setDuration(long duration) {
-        this.duration = duration;
     }
 }

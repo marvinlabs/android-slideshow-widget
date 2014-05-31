@@ -31,6 +31,10 @@ public class RemoteBitmapAdapter extends BitmapAdapter {
     // Options for the BitmapFactory to decode the bitmap
     private BitmapFactory.Options bitmapFactoryOptions;
 
+    //==============================================================================================
+    // GENERAL METHODS
+    //==
+
     /**
      * Constructor
      *
@@ -56,19 +60,9 @@ public class RemoteBitmapAdapter extends BitmapAdapter {
         this.runningTasks = new SparseArray<DownloadImageTask>(5);
     }
 
-    /**
-     * Stop all running download tasks. This method should be called when your activity gets
-     * stopped (in {#onStop})
-     */
-    public void stopAllDownloads() {
-        final int taskCount = runningTasks.size();
-        for (int i = 0; i < taskCount; ++i) {
-            int key = runningTasks.keyAt(i);
-            DownloadImageTask t = runningTasks.get(key);
-            t.cancel(true);
-        }
-        runningTasks.clear();
-    }
+    //==============================================================================================
+    // INTERFACE IMPLEMENTATION: Adapter
+    //==
 
     @Override
     public int getCount() {
@@ -84,6 +78,10 @@ public class RemoteBitmapAdapter extends BitmapAdapter {
     public long getItemId(int position) {
         return position;
     }
+
+    //==============================================================================================
+    // BITMAP LOADING
+    //==
 
     @Override
     protected void loadBitmap(int position) {
@@ -101,14 +99,34 @@ public class RemoteBitmapAdapter extends BitmapAdapter {
 
     @Override
     protected void onBitmapLoaded(int position, Bitmap bitmap) {
+        Log.d("SlideShowView", "Download finished for item " + position);
         runningTasks.remove(position);
         super.onBitmapLoaded(position, bitmap);
     }
 
     @Override
     protected void onBitmapNotAvailable(int position) {
+        Log.d("SlideShowView", "Download failed for item " + position);
         runningTasks.remove(position);
         super.onBitmapNotAvailable(position);
+    }
+
+    //==============================================================================================
+    // ASYNC MANAGEMENT METHODS
+    //==
+
+    /**
+     * Stop all running download tasks. This method should be called when your activity gets
+     * stopped (in {#onStop})
+     */
+    public void stopAllDownloads() {
+        final int taskCount = runningTasks.size();
+        for (int i = 0; i < taskCount; ++i) {
+            int key = runningTasks.keyAt(i);
+            DownloadImageTask t = runningTasks.get(key);
+            t.cancel(true);
+        }
+        runningTasks.clear();
     }
 
     /**
@@ -123,6 +141,7 @@ public class RemoteBitmapAdapter extends BitmapAdapter {
         }
 
         protected Bitmap doInBackground(String... urls) {
+            Log.d("SlideShowView", "Download started for item " + position);
             InputStream in = null;
             try {
                 in = new java.net.URL(urls[0]).openStream();
@@ -136,6 +155,7 @@ public class RemoteBitmapAdapter extends BitmapAdapter {
                 return bm;
             } catch (Exception e) {
                 Log.e("RemoteImageSlide", "Error while downloading image slide", e);
+                e.printStackTrace();
             } finally {
                 try {
                     if (in != null) in.close();

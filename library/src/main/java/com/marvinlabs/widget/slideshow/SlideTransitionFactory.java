@@ -1,12 +1,11 @@
 package com.marvinlabs.widget.slideshow;
 
-import android.animation.Animator;
 import android.view.View;
 import android.view.ViewPropertyAnimator;
 
 /**
  * An SlideTransitionFactory object is responsible for creating the animators to switch from one slide to the next one
- *
+ * <p/>
  * Created by Vincent Mimoun-Prat @ MarvinLabs on 28/05/2014.
  */
 public interface SlideTransitionFactory {
