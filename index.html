@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset='utf-8'>
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <link href='https://fonts.googleapis.com/css?family=Architects+Daughter' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" type="text/css" href="stylesheets/stylesheet.css" media="screen" />
+    <link rel="stylesheet" type="text/css" href="stylesheets/pygment_trac.css" media="screen" />
+    <link rel="stylesheet" type="text/css" href="stylesheets/print.css" media="print" />
+
+    <!--[if lt IE 9]>
+    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+
+    <title>Android-slideshow-widget by marvinlabs</title>
+  </head>
+
+  <body>
+    <header>
+      <div class="inner">
+        <h1>Android-slideshow-widget</h1>
+        <h2>A set of widgets to create smooth slideshows with ease.</h2>
+        <a href="https://github.com/marvinlabs/android-slideshow-widget" class="button"><small>View project on</small>GitHub</a>
+      </div>
+    </header>
+
+    <div id="content-wrapper">
+      <div class="inner clearfix">
+        <section id="main-content">
+          <h1>
+<a name="android-slideshow-widget" class="anchor" href="#android-slideshow-widget"><span class="octicon octicon-link"></span></a>Android SlideShow Widget</h1>
+
+<p>A set of widgets to create smooth slide shows with ease. The slide show components are fully 
+customizable and are not limited to pictures, you can slide whatever you want to (texts, etc.).</p>
+
+<h2>
+<a name="demo" class="anchor" href="#demo"><span class="octicon octicon-link"></span></a>Demo</h2>
+
+<p>A demo of the widget is worth a thousand words. You can download it for free on Google Play.</p>
+
+<p><a href="https://play.google.com/store/apps/details?id=com.marvinlabs.widget.slideshow.demo">
+  <img alt="Demo on Google Play" src="http://developer.android.com/images/brand/en_generic_rgb_wo_60.png"></a></p>
+
+<h2>
+<a name="usage" class="anchor" href="#usage"><span class="octicon octicon-link"></span></a>Usage</h2>
+
+<h3>
+<a name="including-the-library" class="anchor" href="#including-the-library"><span class="octicon octicon-link"></span></a>Including the library</h3>
+
+<p>The easiest way to get the library included in your project is by using Gradle. Simply add the 
+following line to your dependencies block:</p>
+
+<pre><code>dependencies {
+    compile 'com.marvinlabs:android-slideshow-widget:0.1.+@aar'
+}
+</code></pre>
+
+<p>Of course, you can replace the version number by whichever version you need (you can have a look at 
+this repository's tags to know which is the latest).</p>
+
+<h3>
+<a name="getting-a-slide-show-in-your-fragmentactivity" class="anchor" href="#getting-a-slide-show-in-your-fragmentactivity"><span class="octicon octicon-link"></span></a>Getting a slide show in your fragment/activity</h3>
+
+<p>To include a slide show in your layout, simply use the following XML code snippet:</p>
+
+<pre><code>&lt;com.marvinlabs.widget.slideshow.SlideShowView
+    android:id="@+id/slideshow"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent" /&gt;
+</code></pre>
+
+<p>You can then get the <code>SlideShowView</code> using the usual technique:</p>
+
+<pre><code>slideShowView = (SlideShowView) findViewById(R.id.slideshow);
+</code></pre>
+
+<p>The next step is to create the adapter that will bind your slide data to actual views. This is a 
+process very similar to what you do when working with the <code>ListView</code> widget. In this library, 
+we have a few base adapters to help you create picture slide shows easily from images in your
+application resources or from images on the Internet. The code would look like that:</p>
+
+<pre><code>adapter = new ResourceBitmapAdapter(this, new int[]{
+    R.raw.slide_01, R.raw.slide_02, R.raw.slide_03, R.raw.slide_04});
+</code></pre>
+
+<p>Once your activity is ready, or inside an event handler like a button click method, you can then 
+start the slideshow:</p>
+
+<pre><code>slideShowView.play();
+</code></pre>
+
+<h2>
+<a name="customisable-components" class="anchor" href="#customisable-components"><span class="octicon octicon-link"></span></a>Customisable components</h2>
+
+<h3>
+<a name="slideshowadapter" class="anchor" href="#slideshowadapter"><span class="octicon octicon-link"></span></a>SlideShowAdapter</h3>
+
+<p>This is the key component to bind your slide data with actual view widgets. Have you heard about 
+<code>ListView</code> and <code>Adapter</code>? Well, this is exactly the same concept. </p>
+
+<p>To get you started with picture slide shows, we have created a few useful adapters:</p>
+
+<ul>
+<li>
+<code>ResourceBitmapAdapter</code> will allow you to show a list of application resource drawables</li>
+<li>
+<code>RemoteBitmapAdapter</code> will allow you to show a list of images that are loaded from the 
+Internet.</li>
+</ul><h3>
+<a name="slidetransitionfactory" class="anchor" href="#slidetransitionfactory"><span class="octicon octicon-link"></span></a>SlideTransitionFactory</h3>
+
+<p>You want something else than just a fade between slides? Simply implement this interface to return 
+whichever view animator you want. </p>
+
+<p>To make it easy for you, we already have a few default implementations that should cover most of 
+your needs:</p>
+
+<ul>
+<li>
+<code>FadeTransitionFactory</code> if you want your slides to fade out and in</li>
+<li>
+<code>SlideAndZoomTransitionFactory</code> if you want your slides to slide ou left and then zoom in</li>
+<li>
+<code>NoTransitionFactory</code>  if you want your slides to brutally show up</li>
+</ul><h3>
+<a name="playlist" class="anchor" href="#playlist"><span class="octicon octicon-link"></span></a>PlayList</h3>
+
+<p>You want to change the order of your slides? You need your slides to have a variable duration? 
+Well, that's the interface to implement to change that. </p>
+
+<p>To make it easy for you, we already have a few default implementations that should cover most of 
+your needs:</p>
+
+<ul>
+<li>
+<code>SequentialPlayList</code> will play slides in order with a common default duration</li>
+<li>
+<code>RandomPlayList</code> will play slides in a random order with a common default duration</li>
+</ul><h2>
+<a name="about-vincent--marvinlabs" class="anchor" href="#about-vincent--marvinlabs"><span class="octicon octicon-link"></span></a>About Vincent &amp; MarvinLabs</h2>
+
+<p>I am a freelance developer located in Biarritz, France. You can 
+<a href="http://vincentprat.info">have a look at my website</a> to get to know me a little better. If you want 
+to follow me, here are some links:</p>
+
+<ul>
+<li><a href="http://twitter.com/vpratfr">Follow me on Twitter</a></li>
+<li><a href="https://plus.google.com/+VincentPrat">Follow me on Google+</a></li>
+<li><a href="http://www.facebook.com/vpratfr">Follow me on Facebook</a></li>
+</ul><p>MarvinLabs is my digital studio specialised in native mobile applications and web sites. You can 
+<a href="http://www.marvinlabs.com">browse our website</a> to get to know us a little better. If you want to 
+get updates about our work, you can also:</p>
+
+<ul>
+<li><a href="http://twitter.com/marvinlabs">Follow us on Twitter</a></li>
+<li><a href="https://plus.google.com/+Marvinlabs">Follow us on Google+</a></li>
+<li><a href="http://www.facebook.com/studio.marvinlabs">Follow us on Facebook</a></li>
+</ul><h2>
+<a name="change-log" class="anchor" href="#change-log"><span class="octicon octicon-link"></span></a>Change log</h2>
+
+<h3>
+<a name="010-2014-05-31" class="anchor" href="#010-2014-05-31"><span class="octicon octicon-link"></span></a>0.1.0 (2014-05-31)</h3>
+
+<ul>
+<li>First release (beta)</li>
+<li>SlideShowView widget to play a slide show</li>
+<li>SlideTransitionFactory to customize the transitions between slides (with 2 default 
+implementations)</li>
+<li>PlayList to customize the order and duration of slides (with 1 default implementations)</li>
+<li>SlideShowAdapter to bind slide data to actual view widgets (with 2 default implementations)</li>
+<li>Demo application</li>
+</ul>
+        </section>
+
+        <aside id="sidebar">
+          <a href="https://github.com/marvinlabs/android-slideshow-widget/zipball/master" class="button">
+            <small>Download</small>
+            .zip file
+          </a>
+          <a href="https://github.com/marvinlabs/android-slideshow-widget/tarball/master" class="button">
+            <small>Download</small>
+            .tar.gz file
+          </a>
+
+          <p class="repo-owner"><a href="https://github.com/marvinlabs/android-slideshow-widget"></a> is maintained by <a href="https://github.com/marvinlabs">marvinlabs</a>.</p>
+
+          <p>This page was generated by <a href="https://pages.github.com">GitHub Pages</a> using the Architect theme by <a href="https://twitter.com/jasonlong">Jason Long</a>.</p>
+        </aside>
+      </div>
+    </div>
+
+  
+  </body>
+</html>
