@@ -37,10 +37,10 @@ public class SlideShowActivity extends Activity {
 
     private SlideShowAdapter createRemoteAdapter() {
         String[] slideUrls = new String[]{
-                "http://www.thisiscolossal.com/wp-content/uploads/2014/01/flickr-5.jpg",
-                "http://www.thisiscolossal.com/wp-content/uploads/2014/01/flickr-8.jpg",
-                "http://www.thisiscolossal.com/wp-content/uploads/2013/11/flickr-2.jpg",
-                "http://www.thisiscolossal.com/wp-content/uploads/2013/11/flickr-8.jpg",
+                "http://lorempixel.com/1280/720/sports",
+                "http://lorempixel.com/1280/720/nature",
+                "http://lorempixel.com/1280/720/people",
+                "http://lorempixel.com/1280/720/city",
             };
         BitmapFactory.Options opts = new BitmapFactory.Options();
         opts.inSampleSize = 2;
