@@ -3,7 +3,10 @@ package com.marvinlabs.widget.slideshow;
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.content.Context;
+import android.content.res.TypedArray;
 import android.database.DataSetObserver;
+import android.graphics.Canvas;
+import android.graphics.drawable.StateListDrawable;
 import android.os.Handler;
 import android.util.AttributeSet;
 import android.util.Log;
@@ -22,7 +25,7 @@ import static com.marvinlabs.widget.slideshow.SlideShowAdapter.SlideStatus;
 /**
  * Created by Vincent Mimoun-Prat @ MarvinLabs on 28/05/2014.
  */
-public class SlideShowView extends RelativeLayout {
+public class SlideShowView extends RelativeLayout implements View.OnClickListener{
 
     private enum Status {
         STOPPED, PAUSED, PLAYING;
@@ -48,6 +51,12 @@ public class SlideShowView extends RelativeLayout {
 
     // The number of slides we have automatically skipped
     private int notAvailableSlidesSkipped = 0;
+
+    // The item click listener
+    private OnSlideClickListener slideClickListener;
+
+    // A selector to show when the view is clicked
+    private StateListDrawable onClickedDrawable;
 
     // Watch the adapter data
     private DataSetObserver adapterObserver = new DataSetObserver() {
@@ -103,12 +112,25 @@ public class SlideShowView extends RelativeLayout {
     }
 
     public SlideShowView(Context context, AttributeSet attrs) {
-        super(context, attrs);
-        initialise();
+        this(context, attrs, 0);
     }
 
     public SlideShowView(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
+        TypedArray customAttrs = context.obtainStyledAttributes(attrs, R.styleable.SlideShowView);
+        try {
+            onClickedDrawable = (StateListDrawable) customAttrs.getDrawable(R.styleable.SlideShowView_selector);
+        } finally {
+            customAttrs.recycle();
+        }
+
+        // If a selector wasn't given we'll load the default selector in the current theme
+        if(onClickedDrawable == null) {
+            TypedArray themeAttrs = getContext().getTheme().obtainStyledAttributes(new int[] {android.R.attr.selectableItemBackground});
+            onClickedDrawable = (StateListDrawable) themeAttrs.getDrawable(0);
+            themeAttrs.recycle();
+        }
+
         initialise();
     }
 
@@ -116,6 +138,7 @@ public class SlideShowView extends RelativeLayout {
         slideHandler = new Handler();
         recycledViews = new SparseArray<View>();
     }
+
 
     //==============================================================================================
     // VIEW LIFECYCLE METHODS
@@ -453,4 +476,77 @@ public class SlideShowView extends RelativeLayout {
         removeView(progressIndicator);
     }
 
+    //==============================================================================================
+    // INTERACTION METHODS
+    //==
+
+
+    public interface OnSlideClickListener {
+
+        /*
+         * Provides a reference to this view and the index of the selected slide
+         */
+        public void onItemClick(SlideShowView parent, int position);
+    }
+
+    @Override
+    public void onClick(View view) {
+        if(slideClickListener != null) {
+            slideClickListener.onItemClick(this, getPlaylist().getCurrentSlide());
+        }
+    }
+
+    public OnSlideClickListener getOnSlideClickListener() {
+        return slideClickListener;
+    }
+
+    /**
+     * Set the click listener for the slides and makes this view clickable
+     *
+     * @param slideClickListener
+     */
+    public void setOnSlideClickListener(OnSlideClickListener slideClickListener) {
+        this.slideClickListener = slideClickListener;
+        if(slideClickListener != null) {
+            setClickable(true);
+            setOnClickListener(this);
+        } else {
+            setClickable(false);
+            setOnClickListener(null);
+        }
+    }
+
+    /*
+     * When the size of the view changes, the size of the selector must scale with it
+     */
+    @Override
+    protected void onSizeChanged(int w, int h, int oldw, int oldh) {
+        super.onSizeChanged(w, h, oldw, oldh);
+        if(onClickedDrawable != null) {
+            onClickedDrawable.setBounds(0, 0, w, h);
+        }
+    }
+
+    /*
+     * Draw on top of the view after all its children have been drawn
+     */
+    @Override
+    protected void dispatchDraw(Canvas canvas) {
+        super.dispatchDraw(canvas);
+        if(onClickedDrawable != null) {
+            onClickedDrawable.draw(canvas);
+        }
+    }
+
+    /*
+     * In order to show the selector, its drawablestate must be the same as the view's one
+     */
+    @Override
+    protected void drawableStateChanged() {
+        super.drawableStateChanged();
+        if(onClickedDrawable != null) {
+            onClickedDrawable.setState(getDrawableState());
+            invalidate();
+        }
+    }
 }
