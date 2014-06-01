@@ -455,6 +455,10 @@ public class SlideShowView extends RelativeLayout implements View.OnClickListene
                 @Override
                 public void onAnimationStart(Animator animation) {
                     inView.setVisibility(View.VISIBLE);
+                }
+
+                @Override
+                public void onAnimationEnd(Animator animation) {
                     notifySlideShown(currentPosition);
                 }
             }).start();
