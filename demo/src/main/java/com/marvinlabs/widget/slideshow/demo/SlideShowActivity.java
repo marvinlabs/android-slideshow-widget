@@ -3,15 +3,18 @@ package com.marvinlabs.widget.slideshow.demo;
 import android.app.Activity;
 import android.graphics.BitmapFactory;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.Window;
 import android.view.WindowManager;
+import android.widget.Toast;
 
 import com.marvinlabs.widget.slideshow.SlideShowAdapter;
 import com.marvinlabs.widget.slideshow.SlideShowView;
 import com.marvinlabs.widget.slideshow.adapter.RemoteBitmapAdapter;
 import com.marvinlabs.widget.slideshow.adapter.ResourceBitmapAdapter;
+import com.marvinlabs.widget.slideshow.transition.SlideAndZoomTransitionFactory;
 
 import java.util.Arrays;
 
@@ -76,7 +79,11 @@ public class SlideShowActivity extends Activity {
         slideShowView.setAdapter(createRemoteAdapter());
 
         // Optional customisation follows
-        // slideShowView.setTransitionFactory(new SlideAndZoomTransitionFactory());
+        slideShowView.setTransitionFactory(new SlideAndZoomTransitionFactory(2000));
+
+        // Some listeners if needed
+        slideShowView.setOnSlideShowEventListener(slideShowListener);
+        slideShowView.setOnSlideClickListener(slideClickListener);
 
         // Then attach the adapter
         slideShowView.play();
@@ -100,5 +107,34 @@ public class SlideShowActivity extends Activity {
         }
         return super.onOptionsItemSelected(item);
     }
+
+    private SlideShowView.OnSlideClickListener slideClickListener = new SlideShowView.OnSlideClickListener() {
+        @Override
+        public void onItemClick(SlideShowView parent, int position) {
+            Toast.makeText(SlideShowActivity.this, "Slide clicked: " + position, Toast.LENGTH_SHORT).show();
+        }
+    };
+
+    private SlideShowView.OnSlideShowEventListener slideShowListener = new SlideShowView.OnSlideShowEventListener() {
+        @Override
+        public void beforeSlideShown(SlideShowView parent, int position) {
+            Log.d("SlideShowDemo", "OnSlideShowEventListener.beforeSlideShown: " + position);
+        }
+
+        @Override
+        public void onSlideShown(SlideShowView parent, int position) {
+            Log.d("SlideShowDemo", "OnSlideShowEventListener.onSlideShown: " + position);
+        }
+
+        @Override
+        public void beforeSlideHidden(SlideShowView parent, int position) {
+            Log.d("SlideShowDemo", "OnSlideShowEventListener.beforeSlideHidden: " + position);
+        }
+
+        @Override
+        public void onSlideHidden(SlideShowView parent, int position) {
+            Log.d("SlideShowDemo", "OnSlideShowEventListener.onSlideHidden: " + position);
+        }
+    };
 
 }
