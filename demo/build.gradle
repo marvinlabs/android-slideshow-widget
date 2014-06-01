@@ -8,10 +8,12 @@ android {
 
     signingConfigs {
         release {
-            storeFile file(signingProperties['storeFile'])
-            storePassword signingProperties['storePassword']
-            keyAlias signingProperties['keyAlias']
-            keyPassword signingProperties['keyPassword']
+            if (signingProperties['canSignRelease']) {
+                storeFile file(signingProperties['storeFile'])
+                storePassword signingProperties['storePassword']
+                keyAlias signingProperties['keyAlias']
+                keyPassword signingProperties['keyPassword']
+            }
         }
     }
 
