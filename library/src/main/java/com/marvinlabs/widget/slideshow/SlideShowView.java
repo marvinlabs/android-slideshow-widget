@@ -25,7 +25,7 @@ import static com.marvinlabs.widget.slideshow.SlideShowAdapter.SlideStatus;
 /**
  * Created by Vincent Mimoun-Prat @ MarvinLabs on 28/05/2014.
  */
-public class SlideShowView extends RelativeLayout implements View.OnClickListener{
+public class SlideShowView extends RelativeLayout implements View.OnClickListener {
 
     private enum Status {
         STOPPED, PAUSED, PLAYING;
@@ -51,6 +51,9 @@ public class SlideShowView extends RelativeLayout implements View.OnClickListene
 
     // The number of slides we have automatically skipped
     private int notAvailableSlidesSkipped = 0;
+
+    // The slide show listener
+    private OnSlideShowEventListener slideShowEventListener;
 
     // The item click listener
     private OnSlideClickListener slideClickListener;
@@ -125,8 +128,8 @@ public class SlideShowView extends RelativeLayout implements View.OnClickListene
         }
 
         // If a selector wasn't given we'll load the default selector in the current theme
-        if(onClickedDrawable == null) {
-            TypedArray themeAttrs = getContext().getTheme().obtainStyledAttributes(new int[] {android.R.attr.selectableItemBackground});
+        if (onClickedDrawable == null) {
+            TypedArray themeAttrs = getContext().getTheme().obtainStyledAttributes(new int[]{android.R.attr.selectableItemBackground});
             onClickedDrawable = (StateListDrawable) themeAttrs.getDrawable(0);
             themeAttrs.recycle();
         }
@@ -185,6 +188,49 @@ public class SlideShowView extends RelativeLayout implements View.OnClickListene
         if (adapter == null) {
             throw new RuntimeException("The SlideShowView needs an adapter (currently null)");
         }
+    }
+
+    /*
+     * When the size of the view changes, the size of the selector must scale with it
+     */
+    @Override
+    protected void onSizeChanged(int w, int h, int oldw, int oldh) {
+        super.onSizeChanged(w, h, oldw, oldh);
+        if (onClickedDrawable != null) {
+            onClickedDrawable.setBounds(0, 0, w, h);
+        }
+    }
+
+    /*
+     * Draw on top of the view after all its children have been drawn
+     */
+    @Override
+    protected void dispatchDraw(Canvas canvas) {
+        super.dispatchDraw(canvas);
+        if (onClickedDrawable != null) {
+            onClickedDrawable.draw(canvas);
+        }
+    }
+
+    /*
+     * In order to show the selector, its drawablestate must be the same as the view's one
+     */
+    @Override
+    protected void drawableStateChanged() {
+        super.drawableStateChanged();
+        if (onClickedDrawable != null) {
+            onClickedDrawable.setState(getDrawableState());
+            invalidate();
+        }
+    }
+
+    //==============================================================================================
+    // TOUCH HANDLING
+    //==
+
+    @Override
+    public void onClick(View view) {
+        notifySlideClicked();
     }
 
     //==============================================================================================
@@ -308,7 +354,7 @@ public class SlideShowView extends RelativeLayout implements View.OnClickListene
         final SlideStatus slideStatus = adapter.getSlideStatus(position);
 
         // Don't play anything if we have reached the end
-        if (position<0) {
+        if (position < 0) {
             stop();
             return;
         }
@@ -337,7 +383,7 @@ public class SlideShowView extends RelativeLayout implements View.OnClickListene
 
                 // Stop if we have already skipped all slides
                 ++notAvailableSlidesSkipped;
-                if (notAvailableSlidesSkipped<adapter.getCount()) {
+                if (notAvailableSlidesSkipped < adapter.getCount()) {
                     prepareSlide(pl.getNextSlide());
                     next();
                 } else {
@@ -370,7 +416,7 @@ public class SlideShowView extends RelativeLayout implements View.OnClickListene
      * @param position The index of the slide to prepare
      */
     private void prepareSlide(int position) {
-        if (adapter != null && position>=0) {
+        if (adapter != null && position >= 0) {
             adapter.prepareSlide(position);
         }
     }
@@ -400,6 +446,9 @@ public class SlideShowView extends RelativeLayout implements View.OnClickListene
         }
         addView(inView);
 
+        // Notify that the slide is about to be shown
+        notifyBeforeSlideShown(currentPosition);
+
         // Transition between current and new slide
         final SlideTransitionFactory tf = getTransitionFactory();
 
@@ -410,13 +459,21 @@ public class SlideShowView extends RelativeLayout implements View.OnClickListene
                 public void onAnimationStart(Animator animation) {
                     inView.setVisibility(View.VISIBLE);
                 }
+
+                @Override
+                public void onAnimationEnd(Animator animation) {
+                    notifySlideShown(currentPosition);
+                }
             }).start();
         } else {
             inView.setVisibility(View.VISIBLE);
+            notifySlideShown(currentPosition);
         }
 
         int childCount = getChildCount();
         if (childCount > 1) {
+            notifyBeforeSlideHidden(previousPosition);
+
             final View outView = getChildAt(0);
             final ViewPropertyAnimator outAnimator = tf.getOutAnimator(outView, this, previousPosition, currentPosition);
             if (outAnimator != null) {
@@ -424,16 +481,25 @@ public class SlideShowView extends RelativeLayout implements View.OnClickListene
                     @Override
                     public void onAnimationEnd(Animator animation) {
                         outView.setVisibility(View.INVISIBLE);
+                        notifySlideHidden(previousPosition);
                         recyclePreviousSlideView(previousPosition, outView);
                     }
                 }).start();
             } else {
                 outView.setVisibility(View.INVISIBLE);
+                notifySlideHidden(previousPosition);
                 recyclePreviousSlideView(previousPosition, outView);
             }
         }
     }
 
+    /**
+     * Get a view for the slide at the given index. If possible, we will reuse a view from our
+     * recycled pool. If not, we will ask the adapter to create one from scratch.
+     *
+     * @param position The index of the slide to get a view for
+     * @return The view (either a new one or a recycled one with updated properties
+     */
     private View getSlideView(int position) {
         // Do we have a view in our recycling bean?
         int viewType = adapter.getItemViewType(position);
@@ -443,6 +509,13 @@ public class SlideShowView extends RelativeLayout implements View.OnClickListene
         return v;
     }
 
+    /**
+     * Once the previous slide has disappeared, we remove its view from our hierarchy and add it to
+     * the views that can be re-used.
+     *
+     * @param position The position of the slide to recycle
+     * @param view     The view to recycle
+     */
     private void recyclePreviousSlideView(int position, View view) {
         // Remove view from our hierarchy
         removeView(view);
@@ -469,36 +542,141 @@ public class SlideShowView extends RelativeLayout implements View.OnClickListene
     // PROGRESS METHODS
     //==
 
+    /**
+     * Show the progress indicator when a slide is being loaded
+     */
     protected void showProgressIndicator() {
         progressIndicator.setAlpha(0);
         addView(progressIndicator);
         progressIndicator.animate().alpha(1).setDuration(500).start();
     }
 
+    /**
+     * Hide the progress indicator once the slide has finished loading
+     */
     protected void hideProgressIndicator() {
         removeView(progressIndicator);
     }
 
     //==============================================================================================
-    // INTERACTION METHODS
+    // SLIDESHOW LISTENERS
     //==
 
+    /**
+     * Interface to be implemented to listen to the slide show events (slide changing, ...)
+     */
+    public interface OnSlideShowEventListener {
 
+        /**
+         * Called before the slide is actually shown, that is before we start the IN transition
+         *
+         * @param parent   The parent SlideShowView
+         * @param position The position of the slide that is about to be displayed
+         */
+        public void beforeSlideShown(SlideShowView parent, int position);
+
+        /**
+         * Called once the slide is actually shown, that is after the IN transition is complete
+         *
+         * @param parent   The parent SlideShowView
+         * @param position The position of the slide that is displayed
+         */
+        public void onSlideShown(SlideShowView parent, int position);
+
+        /**
+         * Called before the slide is actually hidden, that is before we start the OUT transition
+         *
+         * @param parent   The parent SlideShowView
+         * @param position The position of the slide that is hidden
+         */
+        public void beforeSlideHidden(SlideShowView parent, int position);
+
+        /**
+         * Called once the slide is actually hidden, that is after the OUT transition is complete
+         *
+         * @param parent   The parent SlideShowView
+         * @param position The position of the slide that is about to be hidden
+         */
+        public void onSlideHidden(SlideShowView parent, int position);
+    }
+
+    /**
+     * Get the current slide show listener
+     *
+     * @return The current listener (null if none)
+     */
+    public OnSlideShowEventListener getOnSlideShowEventListener() {
+        return slideShowEventListener;
+    }
+
+    /**
+     * Set the slide show listener
+     *
+     * @param slideShowEventListener the slide show listener (null if you want to remove the current one)
+     */
+    public void setOnSlideShowEventListener(OnSlideShowEventListener slideShowEventListener) {
+        this.slideShowEventListener = slideShowEventListener;
+    }
+
+    /**
+     * Notify the listeners that a slide got shown
+     */
+    private void notifySlideShown(int position) {
+        if (slideShowEventListener != null) {
+            slideShowEventListener.onSlideShown(this, position);
+        }
+    }
+
+    /**
+     * Notify the listeners that a slide got shown
+     */
+    private void notifySlideHidden(int position) {
+        if (slideShowEventListener != null) {
+            slideShowEventListener.onSlideHidden(this, position);
+        }
+    }
+
+    /**
+     * Notify the listeners that a slide got shown
+     */
+    private void notifyBeforeSlideShown(int position) {
+        if (slideShowEventListener != null) {
+            slideShowEventListener.beforeSlideShown(this, position);
+        }
+    }
+
+    /**
+     * Notify the listeners that a slide got shown
+     */
+    private void notifyBeforeSlideHidden(int position) {
+        if (slideShowEventListener != null) {
+            slideShowEventListener.beforeSlideHidden(this, position);
+        }
+    }
+
+    //==============================================================================================
+    // SLIDE CLICKED METHODS
+    //==
+
+    /**
+     * Interface to be implemented to get notified when a slide gets clicked/tapped
+     */
     public interface OnSlideClickListener {
 
-        /*
-         * Provides a reference to this view and the index of the selected slide
+        /**
+         * Callback called when the slide is clicked
+         *
+         * @param parent   The parent SlideShowView
+         * @param position The position of the slide that got clicked
          */
         public void onItemClick(SlideShowView parent, int position);
     }
 
-    @Override
-    public void onClick(View view) {
-        if(slideClickListener != null) {
-            slideClickListener.onItemClick(this, getPlaylist().getCurrentSlide());
-        }
-    }
-
+    /**
+     * Get the current slide click listener
+     *
+     * @return The current listener (null if none)
+     */
     public OnSlideClickListener getOnSlideClickListener() {
         return slideClickListener;
     }
@@ -506,11 +684,11 @@ public class SlideShowView extends RelativeLayout implements View.OnClickListene
     /**
      * Set the click listener for the slides and makes this view clickable
      *
-     * @param slideClickListener
+     * @param slideClickListener the click listener (null if you want to remove the current one)
      */
     public void setOnSlideClickListener(OnSlideClickListener slideClickListener) {
         this.slideClickListener = slideClickListener;
-        if(slideClickListener != null) {
+        if (slideClickListener != null) {
             setClickable(true);
             setOnClickListener(this);
         } else {
@@ -519,37 +697,12 @@ public class SlideShowView extends RelativeLayout implements View.OnClickListene
         }
     }
 
-    /*
-     * When the size of the view changes, the size of the selector must scale with it
+    /**
+     * Notify the listeners that a slide got clicked
      */
-    @Override
-    protected void onSizeChanged(int w, int h, int oldw, int oldh) {
-        super.onSizeChanged(w, h, oldw, oldh);
-        if(onClickedDrawable != null) {
-            onClickedDrawable.setBounds(0, 0, w, h);
-        }
-    }
-
-    /*
-     * Draw on top of the view after all its children have been drawn
-     */
-    @Override
-    protected void dispatchDraw(Canvas canvas) {
-        super.dispatchDraw(canvas);
-        if(onClickedDrawable != null) {
-            onClickedDrawable.draw(canvas);
-        }
-    }
-
-    /*
-     * In order to show the selector, its drawablestate must be the same as the view's one
-     */
-    @Override
-    protected void drawableStateChanged() {
-        super.drawableStateChanged();
-        if(onClickedDrawable != null) {
-            onClickedDrawable.setState(getDrawableState());
-            invalidate();
+    private void notifySlideClicked() {
+        if (slideClickListener != null) {
+            slideClickListener.onItemClick(this, getPlaylist().getCurrentSlide());
         }
     }
 }

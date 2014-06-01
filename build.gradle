@@ -67,11 +67,22 @@ allprojects {
      * - keyPassword
      */
     ext.getSigningProperties = {
-        def String path = System.getenv("ANDROID_PRIVATE_PROPERTIES_PATH")
-        def File file = new File(path + "/" + rootProject.name + "/keystore.properties");
         def Properties properties  = new Properties();
-        properties.load(new FileInputStream(file))
-        properties.put("storeFile", path + "/" + rootProject.name + "/project.keystore")
+        try {
+            def String path = System.getenv("ANDROID_PRIVATE_PROPERTIES_PATH")
+            def File file = new File(path + "/" + rootProject.name + "/keystore.properties");
+            properties.load(new FileInputStream(file))
+            properties.put("storeFile", path + "/" + rootProject.name + "/project.keystore")
+            properties.put("canSignRelease", true)
+        }
+        catch (ignored) {
+            // You can put your own properties here if you want
+            properties.put("storeFile", "")
+            properties.put("storePassword", "")
+            properties.put("keyAlias", "")
+            properties.put("keyPassword", "")
+            properties.put("canSignRelease", false)
+        }
         return properties;
     }
 }

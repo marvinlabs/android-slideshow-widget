@@ -109,6 +109,14 @@ get updates about our work, you can also:
 
 ## Change log
 
+### 0.2.0 (2014-06-01)
+
+  - [new] a RandomPlayList implementation
+  - [new] listener for slide show events
+  - [new] listener for slide click event (similar to ListView's item click listener) (Thanks 
+    Arasthel)
+  - [fix] Some additional inline documentation
+  
 ### 0.1.0 (2014-05-31)
 
   - First release (beta)
