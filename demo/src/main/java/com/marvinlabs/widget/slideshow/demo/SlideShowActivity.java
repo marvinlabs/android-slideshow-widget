@@ -14,7 +14,7 @@ import com.marvinlabs.widget.slideshow.SlideShowAdapter;
 import com.marvinlabs.widget.slideshow.SlideShowView;
 import com.marvinlabs.widget.slideshow.adapter.RemoteBitmapAdapter;
 import com.marvinlabs.widget.slideshow.adapter.ResourceBitmapAdapter;
-import com.marvinlabs.widget.slideshow.transition.SlideAndZoomTransitionFactory;
+import com.marvinlabs.widget.slideshow.playlist.RandomPlayList;
 
 import java.util.Arrays;
 
@@ -79,7 +79,8 @@ public class SlideShowActivity extends Activity {
         slideShowView.setAdapter(createRemoteAdapter());
 
         // Optional customisation follows
-        slideShowView.setTransitionFactory(new SlideAndZoomTransitionFactory(2000));
+        // slideShowView.setTransitionFactory(new SlideAndZoomTransitionFactory(2000));
+        slideShowView.setPlaylist(new RandomPlayList());
 
         // Some listeners if needed
         slideShowView.setOnSlideShowEventListener(slideShowListener);
