@@ -52,6 +52,9 @@ public class SlideShowView extends RelativeLayout implements View.OnClickListene
     // The number of slides we have automatically skipped
     private int notAvailableSlidesSkipped = 0;
 
+    // The slide show listener
+    private OnSlideShowEventListener slideShowEventListener;
+
     // The item click listener
     private OnSlideClickListener slideClickListener;
 
@@ -227,9 +230,7 @@ public class SlideShowView extends RelativeLayout implements View.OnClickListene
 
     @Override
     public void onClick(View view) {
-        if (slideClickListener != null) {
-            slideClickListener.onItemClick(this, getPlaylist().getCurrentSlide());
-        }
+        notifySlideClicked();
     }
 
     //==============================================================================================
@@ -442,6 +443,9 @@ public class SlideShowView extends RelativeLayout implements View.OnClickListene
         inView.setVisibility(View.INVISIBLE);
         addView(inView);
 
+        // Notify that the slide is about to be shown
+        notifyBeforeSlideShown(currentPosition);
+
         // Transition between current and new slide
         final SlideTransitionFactory tf = getTransitionFactory();
 
@@ -451,14 +455,18 @@ public class SlideShowView extends RelativeLayout implements View.OnClickListene
                 @Override
                 public void onAnimationStart(Animator animation) {
                     inView.setVisibility(View.VISIBLE);
+                    notifySlideShown(currentPosition);
                 }
             }).start();
         } else {
             inView.setVisibility(View.VISIBLE);
+            notifySlideShown(currentPosition);
         }
 
         int childCount = getChildCount();
         if (childCount > 1) {
+            notifyBeforeSlideHidden(previousPosition);
+
             final View outView = getChildAt(0);
             final ViewPropertyAnimator outAnimator = tf.getOutAnimator(outView, this, previousPosition, currentPosition);
             if (outAnimator != null) {
@@ -466,11 +474,13 @@ public class SlideShowView extends RelativeLayout implements View.OnClickListene
                     @Override
                     public void onAnimationEnd(Animator animation) {
                         outView.setVisibility(View.INVISIBLE);
+                        notifySlideHidden(previousPosition);
                         recyclePreviousSlideView(previousPosition, outView);
                     }
                 }).start();
             } else {
                 outView.setVisibility(View.INVISIBLE);
+                notifySlideHidden(previousPosition);
                 recyclePreviousSlideView(previousPosition, outView);
             }
         }
@@ -542,6 +552,102 @@ public class SlideShowView extends RelativeLayout implements View.OnClickListene
     }
 
     //==============================================================================================
+    // SLIDESHOW LISTENERS
+    //==
+
+    /**
+     * Interface to be implemented to listen to the slide show events (slide changing, ...)
+     */
+    public interface OnSlideShowEventListener {
+
+        /**
+         * Called before the slide is actually shown, that is before we start the IN transition
+         *
+         * @param parent   The parent SlideShowView
+         * @param position The position of the slide that is about to be displayed
+         */
+        public void beforeSlideShown(SlideShowView parent, int position);
+
+        /**
+         * Called once the slide is actually shown, that is after the IN transition is complete
+         *
+         * @param parent   The parent SlideShowView
+         * @param position The position of the slide that is displayed
+         */
+        public void onSlideShown(SlideShowView parent, int position);
+
+        /**
+         * Called before the slide is actually hidden, that is before we start the OUT transition
+         *
+         * @param parent   The parent SlideShowView
+         * @param position The position of the slide that is hidden
+         */
+        public void beforeSlideHidden(SlideShowView parent, int position);
+
+        /**
+         * Called once the slide is actually hidden, that is after the OUT transition is complete
+         *
+         * @param parent   The parent SlideShowView
+         * @param position The position of the slide that is about to be hidden
+         */
+        public void onSlideHidden(SlideShowView parent, int position);
+    }
+
+    /**
+     * Get the current slide show listener
+     *
+     * @return The current listener (null if none)
+     */
+    public OnSlideShowEventListener getOnSlideShowEventListener() {
+        return slideShowEventListener;
+    }
+
+    /**
+     * Set the slide show listener
+     *
+     * @param slideShowEventListener the slide show listener (null if you want to remove the current one)
+     */
+    public void setOnSlideShowEventListener(OnSlideShowEventListener slideShowEventListener) {
+        this.slideShowEventListener = slideShowEventListener;
+    }
+
+    /**
+     * Notify the listeners that a slide got shown
+     */
+    private void notifySlideShown(int position) {
+        if (slideShowEventListener != null) {
+            slideShowEventListener.onSlideShown(this, position);
+        }
+    }
+
+    /**
+     * Notify the listeners that a slide got shown
+     */
+    private void notifySlideHidden(int position) {
+        if (slideShowEventListener != null) {
+            slideShowEventListener.onSlideHidden(this, position);
+        }
+    }
+
+    /**
+     * Notify the listeners that a slide got shown
+     */
+    private void notifyBeforeSlideShown(int position) {
+        if (slideShowEventListener != null) {
+            slideShowEventListener.beforeSlideShown(this, position);
+        }
+    }
+
+    /**
+     * Notify the listeners that a slide got shown
+     */
+    private void notifyBeforeSlideHidden(int position) {
+        if (slideShowEventListener != null) {
+            slideShowEventListener.beforeSlideHidden(this, position);
+        }
+    }
+
+    //==============================================================================================
     // SLIDE CLICKED METHODS
     //==
 
@@ -581,6 +687,15 @@ public class SlideShowView extends RelativeLayout implements View.OnClickListene
         } else {
             setClickable(false);
             setOnClickListener(null);
+        }
+    }
+
+    /**
+     * Notify the listeners that a slide got clicked
+     */
+    private void notifySlideClicked() {
+        if (slideClickListener != null) {
+            slideClickListener.onItemClick(this, getPlaylist().getCurrentSlide());
         }
     }
 }
