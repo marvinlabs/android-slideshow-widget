@@ -54,11 +54,11 @@ def getSonatypeRepositoryUrl() {
     }
 }
 
-def getSonatypeUser() {
+def getSonatypeRepositoryUser() {
     return hasProperty('sonatypeUser') ? sonatypeUser : ""
 }
 
-def getSonatypePassword() {
+def getSonatypeRepositoryPassword() {
     return hasProperty('sonatypePassword') ? sonatypePassword : ""
 }
 
