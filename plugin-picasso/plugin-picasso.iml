@@ -3,7 +3,7 @@
   <component name="FacetManager">
     <facet type="android-gradle" name="Android-Gradle">
       <configuration>
-        <option name="GRADLE_PROJECT_PATH" value=":library" />
+        <option name="GRADLE_PROJECT_PATH" value=":plugin-picasso" />
       </configuration>
     </facet>
     <facet type="android" name="Android">
@@ -16,7 +16,7 @@
         <option name="ALLOW_USER_CONFIGURATION" value="false" />
         <option name="MANIFEST_FILE_RELATIVE_PATH" value="/src/main/AndroidManifest.xml" />
         <option name="RES_FOLDER_RELATIVE_PATH" value="/src/main/res" />
-        <option name="RES_FOLDERS_RELATIVE_PATH" value="file://$MODULE_DIR$/src/main/res" />
+        <option name="RES_FOLDERS_RELATIVE_PATH" value="" />
         <option name="ASSETS_FOLDER_RELATIVE_PATH" value="/src/main/assets" />
         <option name="LIBRARY_PROJECT" value="true" />
       </configuration>
@@ -71,6 +71,11 @@
     </content>
     <orderEntry type="jdk" jdkName="Android API 19 Platform" jdkType="Android SDK" />
     <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="library" exported="" name="okio-1.0.0" level="project" />
+    <orderEntry type="library" exported="" name="okhttp-urlconnection-2.0.0-RC1" level="project" />
+    <orderEntry type="library" exported="" name="okhttp-2.0.0-RC1" level="project" />
+    <orderEntry type="library" exported="" name="picasso-2.3.1" level="project" />
+    <orderEntry type="module" module-name="library" exported="" />
   </component>
 </module>
 

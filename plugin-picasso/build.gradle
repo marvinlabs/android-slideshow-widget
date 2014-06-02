@@ -13,7 +13,11 @@ apply plugin: 'android-maven'
 apply plugin: 'signing'
 
 dependencies {
+    compile project(':library')
     compile fileTree(dir: 'libs', include: ['*.jar'])
+    compile 'com.squareup.okhttp:okhttp:2.0.+'
+    compile 'com.squareup.okhttp:okhttp-urlconnection:2.0.+'
+    compile 'com.squareup.picasso:picasso:2.3.+'
 }
 
 android {
@@ -93,10 +97,10 @@ uploadArchives {
             }
 
             pom.project {
-                name 'Android SlideShow Widget'
-                artifactId 'android-slideshow-widget'
+                name 'Android SlideShow Widget - Picasso Plugin'
+                artifactId 'android-slideshow-widget-picasso-plugin'
                 packaging 'aar'
-                description 'A set of widgets to create smooth slideshows with ease.'
+                description 'A plugin that helps integrate the Picasso library with the SlideShow widget library.'
                 url 'https://github.com/marvinlabs/android-slideshow-widget'
 
                 scm {

@@ -1,6 +1,27 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <declare-styleable name="SlideShowView">
-        <attr name="selector" format="reference"></attr>
+        <attr name="selector" format="reference" />
+
+        <!-- PLAYLIST -->
+        <attr name="playlist" format="enum">
+            <enum name="sequential" value="1" />
+            <enum name="random" value="2" />
+        </attr>
+        <attr name="slideDuration" format="integer" />
+        <attr name="loop" format="boolean" />
+        <attr name="enableAutoAdvance" format="boolean" />
+
+        <!-- TRANSITIONS -->
+        <attr name="transition" format="enum">
+            <enum name="none" value="1" />
+            <enum name="random" value="2" />
+            <enum name="fade" value="3" />
+            <enum name="zoom" value="4" />
+            <enum name="slideAndZoom" value="5" />
+            <enum name="flipHorizontal" value="6" />
+            <enum name="flipVertical" value="7" />
+        </attr>
+        <attr name="transitionDuration" format="integer" />
     </declare-styleable>
 </resources>

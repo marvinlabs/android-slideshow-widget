@@ -12,13 +12,18 @@ import android.util.AttributeSet;
 import android.util.Log;
 import android.util.SparseArray;
 import android.view.View;
-import android.view.ViewPropertyAnimator;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 
+import com.marvinlabs.widget.slideshow.playlist.RandomPlayList;
 import com.marvinlabs.widget.slideshow.playlist.SequentialPlayList;
 import com.marvinlabs.widget.slideshow.transition.FadeTransitionFactory;
+import com.marvinlabs.widget.slideshow.transition.FlipTransitionFactory;
+import com.marvinlabs.widget.slideshow.transition.NoTransitionFactory;
+import com.marvinlabs.widget.slideshow.transition.RandomTransitionFactory;
+import com.marvinlabs.widget.slideshow.transition.SlideAndZoomTransitionFactory;
+import com.marvinlabs.widget.slideshow.transition.ZoomTransitionFactory;
 
 import static com.marvinlabs.widget.slideshow.SlideShowAdapter.SlideStatus;
 
@@ -47,7 +52,7 @@ public class SlideShowView extends RelativeLayout implements View.OnClickListene
     private SlideShowAdapter adapter = null;
 
     // The transition maker between slides
-    private SlideTransitionFactory transitionFactory = null;
+    private TransitionFactory transitionFactory = null;
 
     // The number of slides we have automatically skipped
     private int notAvailableSlidesSkipped = 0;
@@ -79,12 +84,23 @@ public class SlideShowView extends RelativeLayout implements View.OnClickListene
     // Recycled views for the adapter to reuse
     SparseArray<View> recycledViews;
 
-    // Wait for the current slide to finish loading
-    private Runnable waitForCurrentSlide = new Runnable() {
+    /**
+     * Class to wait for a slide to be available before displaying it
+     */
+    private class WaitSlideRunnable implements Runnable {
+        protected int currentSlide = 0;
+        protected int previousSlide = 0;
+
+        public void startWaiting(int currentSlide, int previousSlide) {
+            this.currentSlide = currentSlide;
+            this.previousSlide = previousSlide;
+
+            slideHandler.post(this);
+        }
+
         @Override
         public void run() {
-            final PlayList pl = getPlaylist();
-            final SlideStatus status = adapter.getSlideStatus(pl.getCurrentSlide());
+            final SlideStatus status = adapter.getSlideStatus(currentSlide);
 
             switch (status) {
                 case LOADING:
@@ -92,10 +108,15 @@ public class SlideShowView extends RelativeLayout implements View.OnClickListene
                     break;
 
                 default:
-                    playCurrentSlide();
+                    playSlide(currentSlide, previousSlide);
             }
         }
-    };
+    }
+
+    ;
+
+    // Wait for the current slide to finish loading
+    private WaitSlideRunnable waitForCurrentSlide = new WaitSlideRunnable();
 
     // Simply show the next slide (for use with slideHandler.postDelayed)
     private Runnable moveToNextSlide = new Runnable() {
@@ -110,8 +131,7 @@ public class SlideShowView extends RelativeLayout implements View.OnClickListene
     //==
 
     public SlideShowView(Context context) {
-        super(context);
-        initialise();
+        this(context, null, 0);
     }
 
     public SlideShowView(Context context, AttributeSet attrs) {
@@ -120,21 +140,96 @@ public class SlideShowView extends RelativeLayout implements View.OnClickListene
 
     public SlideShowView(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
-        TypedArray customAttrs = context.obtainStyledAttributes(attrs, R.styleable.SlideShowView);
-        try {
-            onClickedDrawable = (StateListDrawable) customAttrs.getDrawable(R.styleable.SlideShowView_selector);
-        } finally {
-            customAttrs.recycle();
-        }
-
-        // If a selector wasn't given we'll load the default selector in the current theme
-        if (onClickedDrawable == null) {
-            TypedArray themeAttrs = getContext().getTheme().obtainStyledAttributes(new int[]{android.R.attr.selectableItemBackground});
-            onClickedDrawable = (StateListDrawable) themeAttrs.getDrawable(0);
-            themeAttrs.recycle();
-        }
-
         initialise();
+        readAttributeSet(context, attrs, defStyle);
+    }
+
+    private void readAttributeSet(Context context, AttributeSet attrs, int defStyle) {
+        if (attrs == null) return;
+
+        TypedArray a = context.obtainStyledAttributes(attrs, R.styleable.SlideShowView);
+
+        // Clicked drawable
+        try {
+            onClickedDrawable = (StateListDrawable) a.getDrawable(R.styleable.SlideShowView_selector);
+        } catch (Exception e) { /* ignored */ }
+
+        if (onClickedDrawable == null) {
+            TypedArray themeAttrs = context.getTheme().obtainStyledAttributes(new int[]{android.R.attr.selectableItemBackground});
+            onClickedDrawable = (StateListDrawable) themeAttrs.getDrawable(0);
+        }
+
+        // Playlist stuff
+        int playlistType = a.getInteger(R.styleable.SlideShowView_playlist, 1);
+        long slideDuration = a.getInteger(R.styleable.SlideShowView_slideDuration, (int) SequentialPlayList.DEFAULT_SLIDE_DURATION);
+        boolean loop = a.getBoolean(R.styleable.SlideShowView_loop, true);
+        boolean autoAdvance = a.getBoolean(R.styleable.SlideShowView_enableAutoAdvance, true);
+
+        switch (playlistType) {
+            case 2: {
+                RandomPlayList pl = new RandomPlayList();
+                pl.setLooping(loop);
+                pl.setSlideDuration(slideDuration);
+                pl.setAutoAdvanceEnabled(autoAdvance);
+                setPlaylist(pl);
+                break;
+            }
+            case 1:
+            default: {
+                SequentialPlayList pl = new SequentialPlayList();
+                pl.setLooping(loop);
+                pl.setSlideDuration(slideDuration);
+                pl.setAutoAdvanceEnabled(autoAdvance);
+                setPlaylist(pl);
+            }
+        }
+
+        // Transition stuff
+        int transitionType = a.getInteger(R.styleable.SlideShowView_transition, 3);
+        long transitionDuration = a.getInteger(R.styleable.SlideShowView_transitionDuration, (int) FadeTransitionFactory.DEFAULT_DURATION);
+
+        switch (transitionType) {
+            case 1: {
+                NoTransitionFactory tf = new NoTransitionFactory();
+                setTransitionFactory(tf);
+                break;
+            }
+            case 2: {
+                RandomTransitionFactory tf = new RandomTransitionFactory(transitionDuration);
+                setTransitionFactory(tf);
+                break;
+            }
+            case 4: {
+                ZoomTransitionFactory tf = new ZoomTransitionFactory(transitionDuration);
+                setTransitionFactory(tf);
+                break;
+            }
+            case 5: {
+                SlideAndZoomTransitionFactory tf = new SlideAndZoomTransitionFactory(transitionDuration);
+                setTransitionFactory(tf);
+                break;
+            }
+            case 6: {
+                FlipTransitionFactory tf = new FlipTransitionFactory(transitionDuration);
+                tf.setDirection(FlipTransitionFactory.FlipAxis.HORIZONTAL);
+                setTransitionFactory(tf);
+                break;
+            }
+            case 7: {
+                FlipTransitionFactory tf = new FlipTransitionFactory(transitionDuration);
+                tf.setDirection(FlipTransitionFactory.FlipAxis.VERTICAL);
+                setTransitionFactory(tf);
+                break;
+            }
+            case 3:
+            default: {
+                FadeTransitionFactory tf = new FadeTransitionFactory(transitionDuration);
+                setTransitionFactory(tf);
+            }
+        }
+
+        // Don't forget to release some memory
+        a.recycle();
     }
 
     private void initialise() {
@@ -271,14 +366,14 @@ public class SlideShowView extends RelativeLayout implements View.OnClickListene
     // ANIMATION-RELATED METHODS
     //==
 
-    public SlideTransitionFactory getTransitionFactory() {
+    public TransitionFactory getTransitionFactory() {
         if (transitionFactory == null) {
             transitionFactory = new FadeTransitionFactory();
         }
         return transitionFactory;
     }
 
-    public void setTransitionFactory(SlideTransitionFactory transitionFactory) {
+    public void setTransitionFactory(TransitionFactory transitionFactory) {
         this.transitionFactory = transitionFactory;
     }
 
@@ -325,8 +420,26 @@ public class SlideShowView extends RelativeLayout implements View.OnClickListene
      * Move to the next slide
      */
     public void next() {
-        getPlaylist().next();
-        playCurrentSlide();
+        final PlayList pl = getPlaylist();
+
+        final int previousPosition = pl.getCurrentSlide();
+        pl.next();
+        final int currentPosition = pl.getCurrentSlide();
+
+        playSlide(currentPosition, previousPosition);
+    }
+
+    /**
+     * Move to the previous slide
+     */
+    public void previous() {
+        final PlayList pl = getPlaylist();
+
+        final int previousPosition = pl.getCurrentSlide();
+        pl.previous();
+        final int currentPosition = pl.getCurrentSlide();
+
+        playSlide(currentPosition, previousPosition);
     }
 
     /**
@@ -341,6 +454,55 @@ public class SlideShowView extends RelativeLayout implements View.OnClickListene
         // TODO Use the out transition to hide the current view
         // Hide all visible views
         removeAllViews();
+        recycledViews.clear();
+    }
+
+    /**
+     * Pause the slide show
+     */
+    public void pause() {
+        switch (status) {
+            case PAUSED:
+            case STOPPED:
+                return;
+
+            case PLAYING:
+                status = Status.PAUSED;
+
+                // Remove all callbacks
+                slideHandler.removeCallbacksAndMessages(null);
+        }
+    }
+
+    /**
+     * Resume the slideshow
+     */
+    public void resume() {
+        switch (status) {
+            case PLAYING:
+                return;
+
+            case STOPPED:
+                play();
+                return;
+
+            default:
+                status = Status.PLAYING;
+
+                PlayList pl = getPlaylist();
+                if (pl.isAutoAdvanceEnabled()) {
+                    slideHandler.removeCallbacks(moveToNextSlide);
+                    slideHandler.postDelayed(moveToNextSlide, pl.getSlideDuration(pl.getCurrentSlide()));
+                }
+        }
+    }
+
+    /**
+     * If playing, pauses the slideshow. Else, resumes it.
+     */
+    public void togglePause() {
+        if (status == Status.PLAYING) pause();
+        else resume();
     }
 
     /**
@@ -348,13 +510,12 @@ public class SlideShowView extends RelativeLayout implements View.OnClickListene
      * move to the next one. If that slide is loading, we wait until it is ready and then we play
      * it.
      */
-    protected void playCurrentSlide() {
+    protected void playSlide(int currentPosition, int previousPosition) {
+        final SlideStatus slideStatus = adapter.getSlideStatus(currentPosition);
         final PlayList pl = getPlaylist();
-        final int position = pl.getCurrentSlide();
-        final SlideStatus slideStatus = adapter.getSlideStatus(position);
 
         // Don't play anything if we have reached the end
-        if (position < 0) {
+        if (currentPosition < 0) {
             stop();
             return;
         }
@@ -371,15 +532,17 @@ public class SlideShowView extends RelativeLayout implements View.OnClickListene
                 status = Status.PLAYING;
 
                 // Schedule next slide
-                slideHandler.postDelayed(moveToNextSlide, pl.getSlideDuration(position));
+                if (pl.isAutoAdvanceEnabled()) {
+                    slideHandler.postDelayed(moveToNextSlide, pl.getSlideDuration(currentPosition));
+                }
 
                 // Display the slide
-                displayCurrentSlide();
+                displaySlide(currentPosition, previousPosition);
 
                 break;
 
             case NOT_AVAILABLE:
-                Log.w("SlideShowView", "Slide is not available: " + position);
+                Log.w("SlideShowView", "Slide is not available: " + currentPosition);
 
                 // Stop if we have already skipped all slides
                 ++notAvailableSlidesSkipped;
@@ -393,20 +556,16 @@ public class SlideShowView extends RelativeLayout implements View.OnClickListene
                 break;
 
             case LOADING:
-                Log.d("SlideShowView", "Slide is not yet ready, waiting for it: " + position);
+                Log.d("SlideShowView", "Slide is not yet ready, waiting for it: " + currentPosition);
 
                 // Show an indicator to the user
                 showProgressIndicator();
 
                 // Start waiting for the slide to be available
-                slideHandler.post(waitForCurrentSlide);
+                waitForCurrentSlide.startWaiting(currentPosition, previousPosition);
 
                 break;
         }
-
-        // Slide is loading, we show the progress indicator and wait for it before making the
-        // transition
-
     }
 
     /**
@@ -428,10 +587,7 @@ public class SlideShowView extends RelativeLayout implements View.OnClickListene
     /**
      * Display the view for the given slide, launching the appropriate transitions if available
      */
-    private void displayCurrentSlide() {
-        final PlayList pl = getPlaylist();
-        final int currentPosition = pl.getCurrentSlide();
-        final int previousPosition = pl.getPreviousSlide();
+    private void displaySlide(final int currentPosition, final int previousPosition) {
 
         Log.v("SlideShowView", "Displaying slide at position: " + currentPosition);
 
@@ -447,11 +603,11 @@ public class SlideShowView extends RelativeLayout implements View.OnClickListene
         notifyBeforeSlideShown(currentPosition);
 
         // Transition between current and new slide
-        final SlideTransitionFactory tf = getTransitionFactory();
+        final TransitionFactory tf = getTransitionFactory();
 
-        final ViewPropertyAnimator inAnimator = tf.getInAnimator(inView, this, previousPosition, currentPosition);
+        final Animator inAnimator = tf.getInAnimator(inView, this, previousPosition, currentPosition);
         if (inAnimator != null) {
-            inAnimator.setListener(new AnimatorListenerAdapter() {
+            inAnimator.addListener(new AnimatorListenerAdapter() {
                 @Override
                 public void onAnimationStart(Animator animation) {
                     inView.setVisibility(View.VISIBLE);
@@ -461,7 +617,8 @@ public class SlideShowView extends RelativeLayout implements View.OnClickListene
                 public void onAnimationEnd(Animator animation) {
                     notifySlideShown(currentPosition);
                 }
-            }).start();
+            });
+            inAnimator.start();
         } else {
             inView.setVisibility(View.VISIBLE);
             notifySlideShown(currentPosition);
@@ -472,16 +629,17 @@ public class SlideShowView extends RelativeLayout implements View.OnClickListene
             notifyBeforeSlideHidden(previousPosition);
 
             final View outView = getChildAt(0);
-            final ViewPropertyAnimator outAnimator = tf.getOutAnimator(outView, this, previousPosition, currentPosition);
+            final Animator outAnimator = tf.getOutAnimator(outView, this, previousPosition, currentPosition);
             if (outAnimator != null) {
-                outAnimator.setListener(new AnimatorListenerAdapter() {
+                outAnimator.addListener(new AnimatorListenerAdapter() {
                     @Override
                     public void onAnimationEnd(Animator animation) {
                         outView.setVisibility(View.INVISIBLE);
                         notifySlideHidden(previousPosition);
                         recyclePreviousSlideView(previousPosition, outView);
                     }
-                }).start();
+                });
+                outAnimator.start();
             } else {
                 outView.setVisibility(View.INVISIBLE);
                 notifySlideHidden(previousPosition);
@@ -543,6 +701,8 @@ public class SlideShowView extends RelativeLayout implements View.OnClickListene
      * Show the progress indicator when a slide is being loaded
      */
     protected void showProgressIndicator() {
+        removeView(progressIndicator);
+
         progressIndicator.setAlpha(0);
         addView(progressIndicator);
         progressIndicator.animate().alpha(1).setDuration(500).start();

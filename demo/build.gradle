@@ -35,7 +35,14 @@ android {
 }
 
 dependencies {
-    compile project(':library')
     compile fileTree(dir: 'libs', include: ['*.jar'])
+
+    compile project(':library')
+    compile project(':plugin-picasso')
+
     compile 'com.android.support:appcompat-v7:19.1.0'
+
+    compile 'com.squareup.okhttp:okhttp:2.0.+'
+    compile 'com.squareup.okhttp:okhttp-urlconnection:2.0.+'
+    compile 'com.squareup.picasso:picasso:2.3.+'
 }

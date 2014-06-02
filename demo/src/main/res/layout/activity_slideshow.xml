@@ -1,12 +1,18 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    tools:context="com.marvinlabs.widget.slideshow.demo.SlideShowActivity">
+                xmlns:app="http://schemas.android.com/apk/res-auto"
+                xmlns:tools="http://schemas.android.com/tools"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                tools:context="com.marvinlabs.widget.slideshow.demo.SlideShowActivity">
 
     <com.marvinlabs.widget.slideshow.SlideShowView
         android:id="@+id/slideshow"
         android:layout_width="match_parent"
-        android:layout_height="match_parent" />
+        android:layout_height="match_parent"
+        app:enableAutoAdvance="true"
+        app:playlist="random"
+        app:slideDuration="5000"
+        app:transition="slideAndZoom"
+        app:transitionDuration="750"/>
 
 </RelativeLayout>

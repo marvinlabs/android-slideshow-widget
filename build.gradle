@@ -54,6 +54,14 @@ def getSonatypeRepositoryUrl() {
     }
 }
 
+def getSonatypeRepositoryUser() {
+    return hasProperty('sonatypeUser') ? sonatypeUser : ""
+}
+
+def getSonatypeRepositoryPassword() {
+    return hasProperty('sonatypePassword') ? sonatypePassword : ""
+}
+
 allprojects {
     repositories {
         mavenCentral()

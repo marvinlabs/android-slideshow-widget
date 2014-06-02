@@ -1,9 +1,9 @@
 package com.marvinlabs.widget.slideshow.transition;
 
-import android.view.animation.AccelerateDecelerateInterpolator;
+import android.view.animation.DecelerateInterpolator;
 import android.view.animation.Interpolator;
 
-import com.marvinlabs.widget.slideshow.SlideTransitionFactory;
+import com.marvinlabs.widget.slideshow.TransitionFactory;
 
 /**
  * The base implementation for a transition factory. Provides storage for a duration and an
@@ -11,10 +11,10 @@ import com.marvinlabs.widget.slideshow.SlideTransitionFactory;
  * <p/>
  * Created by Vincent Mimoun-Prat @ MarvinLabs on 02/06/2014.
  */
-public abstract class BaseTransitionFactory implements SlideTransitionFactory {
+public abstract class BaseTransitionFactory implements TransitionFactory {
 
-    protected static final long DEFAULT_DURATION = 500;
-    protected static final AccelerateDecelerateInterpolator DEFAULT_INTERPOLATOR = new AccelerateDecelerateInterpolator();
+    public static final long DEFAULT_DURATION = 500;
+    public static final Interpolator DEFAULT_INTERPOLATOR = new DecelerateInterpolator();
 
     // Duration for the transition in ms
     private long duration = DEFAULT_DURATION;
