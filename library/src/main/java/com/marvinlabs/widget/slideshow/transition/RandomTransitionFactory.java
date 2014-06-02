@@ -1,11 +1,11 @@
 package com.marvinlabs.widget.slideshow.transition;
 
+import android.animation.Animator;
 import android.view.View;
-import android.view.ViewPropertyAnimator;
 import android.view.animation.Interpolator;
 
 import com.marvinlabs.widget.slideshow.SlideShowView;
-import com.marvinlabs.widget.slideshow.SlideTransitionFactory;
+import com.marvinlabs.widget.slideshow.TransitionFactory;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -14,16 +14,16 @@ import java.util.Random;
 /**
  * A factory that will pick a random transition for the slides. This assumes that the IN animator is
  * always requested before the OUT animator.
- *
+ * <p/>
  * Created by Vincent Mimoun-Prat @ MarvinLabs on 02/06/2014.
  */
 public class RandomTransitionFactory extends BaseTransitionFactory {
 
     private static final Random RAND = new Random();
 
-    private final List<SlideTransitionFactory> factories;
+    private final List<TransitionFactory> factories;
 
-    private SlideTransitionFactory currentFactory;
+    private TransitionFactory currentFactory;
 
     static {
         RAND.setSeed(System.currentTimeMillis());
@@ -58,7 +58,7 @@ public class RandomTransitionFactory extends BaseTransitionFactory {
     public RandomTransitionFactory(long duration, Interpolator interpolator) {
         super(duration, interpolator);
 
-        factories = new ArrayList<SlideTransitionFactory>();
+        factories = new ArrayList<TransitionFactory>();
         factories.add(new FadeTransitionFactory(getDuration(), getInterpolator()));
         factories.add(new ZoomTransitionFactory(getDuration(), getInterpolator()));
         factories.add(new SlideAndZoomTransitionFactory(getDuration(), getInterpolator()));
@@ -70,7 +70,7 @@ public class RandomTransitionFactory extends BaseTransitionFactory {
     //==
 
     @Override
-    public ViewPropertyAnimator getInAnimator(View target, SlideShowView parent, int fromSlide, int toSlide) {
+    public Animator getInAnimator(View target, SlideShowView parent, int fromSlide, int toSlide) {
         // Pick a factory for this round of transition
         int r = RAND.nextInt(factories.size());
         currentFactory = factories.get(r);
@@ -79,7 +79,7 @@ public class RandomTransitionFactory extends BaseTransitionFactory {
     }
 
     @Override
-    public ViewPropertyAnimator getOutAnimator(View target, SlideShowView parent, int fromSlide, int toSlide) {
+    public Animator getOutAnimator(View target, SlideShowView parent, int fromSlide, int toSlide) {
         // Factory has been picked when calling getInAnimator
         return currentFactory.getOutAnimator(target, parent, fromSlide, toSlide);
     }

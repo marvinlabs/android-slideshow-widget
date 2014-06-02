@@ -1,7 +1,9 @@
 package com.marvinlabs.widget.slideshow.transition;
 
+import android.animation.Animator;
+import android.animation.ObjectAnimator;
+import android.animation.PropertyValuesHolder;
 import android.view.View;
-import android.view.ViewPropertyAnimator;
 import android.view.animation.Interpolator;
 
 import com.marvinlabs.widget.slideshow.SlideShowView;
@@ -48,7 +50,7 @@ public class SlideAndZoomTransitionFactory extends BaseTransitionFactory {
     //==
 
     @Override
-    public ViewPropertyAnimator getInAnimator(View target, SlideShowView parent, int fromSlide, int toSlide) {
+    public Animator getInAnimator(View target, SlideShowView parent, int fromSlide, int toSlide) {
         target.setAlpha(0);
         target.setScaleX(1);
         target.setScaleY(1);
@@ -56,12 +58,31 @@ public class SlideAndZoomTransitionFactory extends BaseTransitionFactory {
         target.setTranslationY(0);
         target.setRotationX(0);
         target.setRotationY(0);
-        return target.animate().setDuration(getDuration()).setInterpolator(getInterpolator()).alpha(1).scaleX(1).scaleY(1);
+
+        final PropertyValuesHolder translationX = PropertyValuesHolder.ofFloat(View.TRANSLATION_X, parent.getWidth(), 0);
+        final PropertyValuesHolder scaleX = PropertyValuesHolder.ofFloat(View.SCALE_X, 0.5f, 0.5f, 1.0f);
+        final PropertyValuesHolder scaleY = PropertyValuesHolder.ofFloat(View.SCALE_Y, 0.5f, 0.5f, 1.0f);
+        final PropertyValuesHolder alpha = PropertyValuesHolder.ofFloat(View.ALPHA, 0, 1, 1);
+
+        ObjectAnimator animator = ObjectAnimator.ofPropertyValuesHolder(target, translationX, scaleX, scaleY, alpha);
+        animator.setDuration(getDuration());
+        animator.setInterpolator(getInterpolator());
+
+        return animator;
     }
 
     @Override
-    public ViewPropertyAnimator getOutAnimator(View target, SlideShowView parent, int fromSlide, int toSlide) {
-        return target.animate().setDuration(getDuration()).setInterpolator(getInterpolator()).alpha(0).translationX(-parent.getWidth());
+    public Animator getOutAnimator(View target, SlideShowView parent, int fromSlide, int toSlide) {
+        final PropertyValuesHolder translationX = PropertyValuesHolder.ofFloat(View.TRANSLATION_X, 0, parent.getWidth());
+        final PropertyValuesHolder scaleX = PropertyValuesHolder.ofFloat(View.SCALE_X, 1.0f, 0.5f, 0.5f);
+        final PropertyValuesHolder scaleY = PropertyValuesHolder.ofFloat(View.SCALE_Y, 1.0f, 0.5f, 0.5f);
+        final PropertyValuesHolder alpha = PropertyValuesHolder.ofFloat(View.ALPHA, 1, 1, 0);
+
+        ObjectAnimator animator = ObjectAnimator.ofPropertyValuesHolder(target, translationX, scaleX, scaleY, alpha);
+        animator.setDuration(getDuration());
+        animator.setInterpolator(getInterpolator());
+
+        return animator;
     }
 
 }

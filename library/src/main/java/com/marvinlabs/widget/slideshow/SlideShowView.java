@@ -12,13 +12,18 @@ import android.util.AttributeSet;
 import android.util.Log;
 import android.util.SparseArray;
 import android.view.View;
-import android.view.ViewPropertyAnimator;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 
+import com.marvinlabs.widget.slideshow.playlist.RandomPlayList;
 import com.marvinlabs.widget.slideshow.playlist.SequentialPlayList;
 import com.marvinlabs.widget.slideshow.transition.FadeTransitionFactory;
+import com.marvinlabs.widget.slideshow.transition.FlipTransitionFactory;
+import com.marvinlabs.widget.slideshow.transition.NoTransitionFactory;
+import com.marvinlabs.widget.slideshow.transition.RandomTransitionFactory;
+import com.marvinlabs.widget.slideshow.transition.SlideAndZoomTransitionFactory;
+import com.marvinlabs.widget.slideshow.transition.ZoomTransitionFactory;
 
 import static com.marvinlabs.widget.slideshow.SlideShowAdapter.SlideStatus;
 
@@ -47,7 +52,7 @@ public class SlideShowView extends RelativeLayout implements View.OnClickListene
     private SlideShowAdapter adapter = null;
 
     // The transition maker between slides
-    private SlideTransitionFactory transitionFactory = null;
+    private TransitionFactory transitionFactory = null;
 
     // The number of slides we have automatically skipped
     private int notAvailableSlidesSkipped = 0;
@@ -110,8 +115,7 @@ public class SlideShowView extends RelativeLayout implements View.OnClickListene
     //==
 
     public SlideShowView(Context context) {
-        super(context);
-        initialise();
+        this(context, null, 0);
     }
 
     public SlideShowView(Context context, AttributeSet attrs) {
@@ -120,21 +124,93 @@ public class SlideShowView extends RelativeLayout implements View.OnClickListene
 
     public SlideShowView(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
-        TypedArray customAttrs = context.obtainStyledAttributes(attrs, R.styleable.SlideShowView);
-        try {
-            onClickedDrawable = (StateListDrawable) customAttrs.getDrawable(R.styleable.SlideShowView_selector);
-        } finally {
-            customAttrs.recycle();
-        }
-
-        // If a selector wasn't given we'll load the default selector in the current theme
-        if (onClickedDrawable == null) {
-            TypedArray themeAttrs = getContext().getTheme().obtainStyledAttributes(new int[]{android.R.attr.selectableItemBackground});
-            onClickedDrawable = (StateListDrawable) themeAttrs.getDrawable(0);
-            themeAttrs.recycle();
-        }
-
         initialise();
+        readAttributeSet(context, attrs, defStyle);
+    }
+
+    private void readAttributeSet(Context context, AttributeSet attrs, int defStyle) {
+        if (attrs == null) return;
+
+        TypedArray a = context.obtainStyledAttributes(attrs, R.styleable.SlideShowView);
+
+        // Clicked drawable
+        try {
+            onClickedDrawable = (StateListDrawable) a.getDrawable(R.styleable.SlideShowView_selector);
+        } catch (Exception e) { /* ignored */ }
+
+        if (onClickedDrawable == null) {
+            TypedArray themeAttrs = context.getTheme().obtainStyledAttributes(new int[]{android.R.attr.selectableItemBackground});
+            onClickedDrawable = (StateListDrawable) themeAttrs.getDrawable(0);
+        }
+
+        // Playlist stuff
+        int playlistType = a.getInteger(R.styleable.SlideShowView_playlist, 1);
+        long slideDuration = a.getInteger(R.styleable.SlideShowView_slideDuration, (int) SequentialPlayList.DEFAULT_SLIDE_DURATION);
+        boolean loop = a.getBoolean(R.styleable.SlideShowView_loop, true);
+
+        switch (playlistType) {
+            case 2: {
+                RandomPlayList pl = new RandomPlayList();
+                pl.setLooping(loop);
+                pl.setSlideDuration(slideDuration);
+                setPlaylist(pl);
+                break;
+            }
+            case 1:
+            default: {
+                SequentialPlayList pl = new SequentialPlayList();
+                pl.setLooping(loop);
+                pl.setSlideDuration(slideDuration);
+                setPlaylist(pl);
+            }
+        }
+
+        // Transition stuff
+        int transitionType = a.getInteger(R.styleable.SlideShowView_transition, 3);
+        long transitionDuration = a.getInteger(R.styleable.SlideShowView_transitionDuration, (int) FadeTransitionFactory.DEFAULT_DURATION);
+
+        switch (transitionType) {
+            case 1: {
+                NoTransitionFactory tf = new NoTransitionFactory();
+                setTransitionFactory(tf);
+                break;
+            }
+            case 2: {
+                RandomTransitionFactory tf = new RandomTransitionFactory(transitionDuration);
+                setTransitionFactory(tf);
+                break;
+            }
+            case 4: {
+                ZoomTransitionFactory tf = new ZoomTransitionFactory(transitionDuration);
+                setTransitionFactory(tf);
+                break;
+            }
+            case 5: {
+                SlideAndZoomTransitionFactory tf = new SlideAndZoomTransitionFactory(transitionDuration);
+                setTransitionFactory(tf);
+                break;
+            }
+            case 6: {
+                FlipTransitionFactory tf = new FlipTransitionFactory(transitionDuration);
+                tf.setDirection(FlipTransitionFactory.FlipAxis.HORIZONTAL);
+                setTransitionFactory(tf);
+                break;
+            }
+            case 7: {
+                FlipTransitionFactory tf = new FlipTransitionFactory(transitionDuration);
+                tf.setDirection(FlipTransitionFactory.FlipAxis.VERTICAL);
+                setTransitionFactory(tf);
+                break;
+            }
+            case 3:
+            default: {
+                FadeTransitionFactory tf = new FadeTransitionFactory(transitionDuration);
+                setTransitionFactory(tf);
+            }
+        }
+
+        // Don't forget to release some memory
+        a.recycle();
     }
 
     private void initialise() {
@@ -271,14 +347,14 @@ public class SlideShowView extends RelativeLayout implements View.OnClickListene
     // ANIMATION-RELATED METHODS
     //==
 
-    public SlideTransitionFactory getTransitionFactory() {
+    public TransitionFactory getTransitionFactory() {
         if (transitionFactory == null) {
             transitionFactory = new FadeTransitionFactory();
         }
         return transitionFactory;
     }
 
-    public void setTransitionFactory(SlideTransitionFactory transitionFactory) {
+    public void setTransitionFactory(TransitionFactory transitionFactory) {
         this.transitionFactory = transitionFactory;
     }
 
@@ -447,11 +523,11 @@ public class SlideShowView extends RelativeLayout implements View.OnClickListene
         notifyBeforeSlideShown(currentPosition);
 
         // Transition between current and new slide
-        final SlideTransitionFactory tf = getTransitionFactory();
+        final TransitionFactory tf = getTransitionFactory();
 
-        final ViewPropertyAnimator inAnimator = tf.getInAnimator(inView, this, previousPosition, currentPosition);
+        final Animator inAnimator = tf.getInAnimator(inView, this, previousPosition, currentPosition);
         if (inAnimator != null) {
-            inAnimator.setListener(new AnimatorListenerAdapter() {
+            inAnimator.addListener(new AnimatorListenerAdapter() {
                 @Override
                 public void onAnimationStart(Animator animation) {
                     inView.setVisibility(View.VISIBLE);
@@ -461,7 +537,8 @@ public class SlideShowView extends RelativeLayout implements View.OnClickListene
                 public void onAnimationEnd(Animator animation) {
                     notifySlideShown(currentPosition);
                 }
-            }).start();
+            });
+            inAnimator.start();
         } else {
             inView.setVisibility(View.VISIBLE);
             notifySlideShown(currentPosition);
@@ -472,16 +549,17 @@ public class SlideShowView extends RelativeLayout implements View.OnClickListene
             notifyBeforeSlideHidden(previousPosition);
 
             final View outView = getChildAt(0);
-            final ViewPropertyAnimator outAnimator = tf.getOutAnimator(outView, this, previousPosition, currentPosition);
+            final Animator outAnimator = tf.getOutAnimator(outView, this, previousPosition, currentPosition);
             if (outAnimator != null) {
-                outAnimator.setListener(new AnimatorListenerAdapter() {
+                outAnimator.addListener(new AnimatorListenerAdapter() {
                     @Override
                     public void onAnimationEnd(Animator animation) {
                         outView.setVisibility(View.INVISIBLE);
                         notifySlideHidden(previousPosition);
                         recyclePreviousSlideView(previousPosition, outView);
                     }
-                }).start();
+                });
+                outAnimator.start();
             } else {
                 outView.setVisibility(View.INVISIBLE);
                 notifySlideHidden(previousPosition);

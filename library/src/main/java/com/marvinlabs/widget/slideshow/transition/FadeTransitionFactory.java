@@ -1,7 +1,8 @@
 package com.marvinlabs.widget.slideshow.transition;
 
+import android.animation.Animator;
+import android.animation.ObjectAnimator;
 import android.view.View;
-import android.view.ViewPropertyAnimator;
 import android.view.animation.Interpolator;
 
 import com.marvinlabs.widget.slideshow.SlideShowView;
@@ -48,7 +49,7 @@ public class FadeTransitionFactory extends BaseTransitionFactory {
     //==
 
     @Override
-    public ViewPropertyAnimator getInAnimator(View target, SlideShowView parent, int fromSlide, int toSlide) {
+    public Animator getInAnimator(View target, SlideShowView parent, int fromSlide, int toSlide) {
         target.setAlpha(0);
         target.setScaleX(1);
         target.setScaleY(1);
@@ -56,11 +57,18 @@ public class FadeTransitionFactory extends BaseTransitionFactory {
         target.setTranslationY(0);
         target.setRotationX(0);
         target.setRotationY(0);
-        return target.animate().setDuration(getDuration()).setInterpolator(getInterpolator()).alpha(1);
+
+        ObjectAnimator animator = ObjectAnimator.ofFloat(target, View.ALPHA, 1);
+        animator.setDuration(getDuration());
+        animator.setInterpolator(getInterpolator());
+        return animator;
     }
 
     @Override
-    public ViewPropertyAnimator getOutAnimator(View target, SlideShowView parent, int fromSlide, int toSlide) {
-        return target.animate().setDuration(getDuration()).setInterpolator(getInterpolator()).alpha(0);
+    public Animator getOutAnimator(View target, SlideShowView parent, int fromSlide, int toSlide) {
+        ObjectAnimator animator = ObjectAnimator.ofFloat(target, View.ALPHA, 0);
+        animator.setDuration(getDuration());
+        animator.setInterpolator(getInterpolator());
+        return animator;
     }
 }

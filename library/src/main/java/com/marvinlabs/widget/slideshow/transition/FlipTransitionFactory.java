@@ -1,8 +1,11 @@
 package com.marvinlabs.widget.slideshow.transition;
 
+import android.animation.Animator;
+import android.animation.ObjectAnimator;
+import android.animation.PropertyValuesHolder;
 import android.view.View;
-import android.view.ViewPropertyAnimator;
 import android.view.animation.Interpolator;
+import android.view.animation.LinearInterpolator;
 
 import com.marvinlabs.widget.slideshow.SlideShowView;
 
@@ -13,11 +16,11 @@ import com.marvinlabs.widget.slideshow.SlideShowView;
  */
 public class FlipTransitionFactory extends BaseTransitionFactory {
 
-    public enum FlipDirection {
+    public enum FlipAxis {
         HORIZONTAL, VERTICAL;
     }
 
-    private FlipDirection direction;
+    private FlipAxis axis;
 
     //==============================================================================================
     // GENERAL METHODS
@@ -27,7 +30,7 @@ public class FlipTransitionFactory extends BaseTransitionFactory {
      * Default constuctor
      */
     public FlipTransitionFactory() {
-        this(DEFAULT_DURATION, DEFAULT_INTERPOLATOR, FlipDirection.VERTICAL);
+        this(DEFAULT_DURATION, new LinearInterpolator(), FlipAxis.VERTICAL);
     }
 
     /**
@@ -36,7 +39,7 @@ public class FlipTransitionFactory extends BaseTransitionFactory {
      * @param duration Duration for the transition in ms
      */
     public FlipTransitionFactory(long duration) {
-        this(duration, DEFAULT_INTERPOLATOR, FlipDirection.VERTICAL);
+        this(duration, new LinearInterpolator(), FlipAxis.VERTICAL);
     }
 
     /**
@@ -46,7 +49,17 @@ public class FlipTransitionFactory extends BaseTransitionFactory {
      * @param interpolator The kind of interpolator we need
      */
     public FlipTransitionFactory(long duration, Interpolator interpolator) {
-        this(duration, interpolator, FlipDirection.VERTICAL);
+        this(duration, interpolator, FlipAxis.VERTICAL);
+    }
+
+    /**
+     * Constructor
+     *
+     * @param duration     The duration for the transition in ms
+     * @param axis The axis on which we want to flip
+     */
+    public FlipTransitionFactory(long duration, FlipAxis axis) {
+        this(duration, new LinearInterpolator(), axis);
     }
 
     /**
@@ -55,27 +68,27 @@ public class FlipTransitionFactory extends BaseTransitionFactory {
      * @param duration     The duration for the transition in ms
      * @param interpolator The kind of interpolator we need
      */
-    public FlipTransitionFactory(long duration, Interpolator interpolator, FlipDirection direction) {
+    public FlipTransitionFactory(long duration, Interpolator interpolator, FlipAxis axis) {
         super(duration, interpolator);
-        this.direction = direction;
+        this.axis = axis;
     }
 
     /**
-     * Get the flip direction
+     * Get the flip axis
      *
-     * @return The flip direction
+     * @return The flip axis
      */
-    public FlipDirection getDirection() {
-        return direction;
+    public FlipAxis getAxis() {
+        return axis;
     }
 
     /**
-     * Set the flip direction
+     * Set the flip axis
      *
-     * @param direction the flip direction
+     * @param axis the flip axis
      */
-    public void setDirection(FlipDirection direction) {
-        this.direction = direction;
+    public void setDirection(FlipAxis axis) {
+        this.axis = axis;
     }
 
     //==============================================================================================
@@ -83,42 +96,64 @@ public class FlipTransitionFactory extends BaseTransitionFactory {
     //==
 
     @Override
-    public ViewPropertyAnimator getInAnimator(View target, SlideShowView parent, int fromSlide, int toSlide) {
+    public Animator getInAnimator(View target, SlideShowView parent, int fromSlide, int toSlide) {
         target.setAlpha(1);
         target.setScaleX(1);
         target.setScaleY(1);
         target.setTranslationX(0);
         target.setTranslationY(0);
-        target.setRotationX(0);
 
-        final ViewPropertyAnimator baseAnimator = target.animate().setDuration(getDuration() / 2).setStartDelay(getDuration() / 2).setInterpolator(getInterpolator());
-        switch (direction) {
-            case HORIZONTAL:
+        final PropertyValuesHolder rotation;
+        final PropertyValuesHolder alpha = PropertyValuesHolder.ofFloat(View.ALPHA, 0, 1);
+
+        switch (axis) {
+            case VERTICAL:
                 target.setRotationX(-90);
-                baseAnimator.rotationX(0);
+                target.setRotationY(0);
+                rotation = PropertyValuesHolder.ofFloat(View.ROTATION_X, 0);
                 break;
 
-            case VERTICAL:
+            case HORIZONTAL:
+            default:
+                target.setRotationX(0);
                 target.setRotationY(-90);
-                baseAnimator.rotationY(0);
+                rotation = PropertyValuesHolder.ofFloat(View.ROTATION_Y, 0);
                 break;
         }
-        return baseAnimator;
+
+        ObjectAnimator animator = ObjectAnimator.ofPropertyValuesHolder(target, rotation/*, alpha*/);
+        animator.setDuration(getDuration()/2);
+        animator.setStartDelay(getDuration()/2);
+        animator.setInterpolator(getInterpolator());
+
+        return animator;
     }
 
     @Override
-    public ViewPropertyAnimator getOutAnimator(View target, SlideShowView parent, int fromSlide, int toSlide) {
-        final ViewPropertyAnimator baseAnimator = target.animate().setDuration(getDuration() / 2).setStartDelay(getDuration() / 2).setInterpolator(getInterpolator());
-        switch (direction) {
-            case HORIZONTAL:
-                baseAnimator.rotationX(90);
+    public Animator getOutAnimator(View target, SlideShowView parent, int fromSlide, int toSlide) {
+        final PropertyValuesHolder rotation;
+        final PropertyValuesHolder alpha = PropertyValuesHolder.ofFloat(View.ALPHA, 1, 0);
+
+        switch (axis) {
+            case VERTICAL:
+                target.setRotationX(0);
+                target.setRotationY(0);
+                rotation = PropertyValuesHolder.ofFloat(View.ROTATION_X, 90);
                 break;
 
-            case VERTICAL:
-                baseAnimator.rotationY(90);
+            case HORIZONTAL:
+            default:
+                target.setRotationX(0);
+                target.setRotationY(0);
+                rotation = PropertyValuesHolder.ofFloat(View.ROTATION_Y, 90);
                 break;
         }
-        return baseAnimator;
+
+        ObjectAnimator animator = ObjectAnimator.ofPropertyValuesHolder(target, rotation/*, alpha*/);
+        animator.setDuration(getDuration()/2);
+        animator.setInterpolator(getInterpolator());
+
+        return animator;
     }
 
 }
