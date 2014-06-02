@@ -1,0 +1,18 @@
+########################################################################
+# OKHTTP
+
+-keepnames class com.levelup.http.okhttp.** { *; }
+-keepnames interface com.levelup.http.okhttp.** { *; }
+
+-keepnames class com.squareup.okhttp.** { *; }
+-keepnames interface com.squareup.okhttp.** { *; }
+
+# OkHttp oddities
+-dontwarn com.squareup.okhttp.internal.http.*
+-dontwarn org.codehaus.mojo.animal_sniffer.IgnoreJRERequirement
+
+########################################################################
+# PICASSO
+
+-dontwarn com.squareup.okhttp.**
+

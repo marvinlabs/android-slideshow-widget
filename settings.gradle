@@ -17,4 +17,4 @@ rootProject.name = 'android-slideshow-widget'
 rootProject.children.each {
     it.name = rootProject.name + "-" + it.name
 }
-include ':library', ':demo'
+include ':library', ':demo', ':plugin-picasso'
