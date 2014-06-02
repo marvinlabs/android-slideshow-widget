@@ -10,6 +10,7 @@
         </attr>
         <attr name="slideDuration" format="integer" />
         <attr name="loop" format="boolean" />
+        <attr name="enableAutoAdvance" format="boolean" />
 
         <!-- TRANSITIONS -->
         <attr name="transition" format="enum">
@@ -22,8 +23,5 @@
             <enum name="flipVertical" value="7" />
         </attr>
         <attr name="transitionDuration" format="integer" />
-
-        <!-- PLAYBACK -->
-        <attr name="autoStart" format="boolean" />
     </declare-styleable>
 </resources>

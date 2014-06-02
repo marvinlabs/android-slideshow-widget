@@ -20,6 +20,9 @@ public class SequentialPlayList implements PlayList {
     // Shall we loop after we have reached the last slide?
     private boolean isLooping = true;
 
+    // Automatically skip to next slide after slideDuration elapsed
+    private boolean isAutoAdvanceEnabled = true;
+
     // Duration in ms for each slide
     private long slideDuration = DEFAULT_SLIDE_DURATION;
 
@@ -89,6 +92,23 @@ public class SequentialPlayList implements PlayList {
         if (currentSlide >= newSlideCount) {
             currentSlide = this.slideCount - 1;
         }
+    }
+
+    /**
+     * Indicate if the slide show is advancing to the next slide after slideDuration ms are elapsed
+     * @return
+     */
+    public boolean isAutoAdvanceEnabled() {
+        return isAutoAdvanceEnabled;
+    }
+
+    /**
+     * Set if the slide show should advance to the next slide after slideDuration ms are elapsed
+     *
+     * @param isAutoAdvanceEnabled true to automatically move to next slide after slideDuration ms
+     */
+    public void setAutoAdvanceEnabled(boolean isAutoAdvanceEnabled) {
+        this.isAutoAdvanceEnabled = isAutoAdvanceEnabled;
     }
 
     //==============================================================================================

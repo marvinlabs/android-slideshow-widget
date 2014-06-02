@@ -64,4 +64,9 @@ public interface PlayList {
      */
     public long getSlideDuration(int position);
 
+    /**
+     * Indicate if the slide show is advancing to the next slide after slideDuration ms are elapsed
+     * @return
+     */
+    public boolean isAutoAdvanceEnabled();
 }

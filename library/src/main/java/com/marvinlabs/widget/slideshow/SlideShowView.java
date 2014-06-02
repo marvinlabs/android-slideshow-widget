@@ -84,12 +84,23 @@ public class SlideShowView extends RelativeLayout implements View.OnClickListene
     // Recycled views for the adapter to reuse
     SparseArray<View> recycledViews;
 
-    // Wait for the current slide to finish loading
-    private Runnable waitForCurrentSlide = new Runnable() {
+    /**
+     * Class to wait for a slide to be available before displaying it
+     */
+    private class WaitSlideRunnable implements Runnable {
+        protected int currentSlide = 0;
+        protected int previousSlide = 0;
+
+        public void startWaiting(int currentSlide, int previousSlide) {
+            this.currentSlide = currentSlide;
+            this.previousSlide = previousSlide;
+
+            slideHandler.post(this);
+        }
+
         @Override
         public void run() {
-            final PlayList pl = getPlaylist();
-            final SlideStatus status = adapter.getSlideStatus(pl.getCurrentSlide());
+            final SlideStatus status = adapter.getSlideStatus(currentSlide);
 
             switch (status) {
                 case LOADING:
@@ -97,10 +108,15 @@ public class SlideShowView extends RelativeLayout implements View.OnClickListene
                     break;
 
                 default:
-                    playCurrentSlide();
+                    playSlide(currentSlide, previousSlide);
             }
         }
-    };
+    }
+
+    ;
+
+    // Wait for the current slide to finish loading
+    private WaitSlideRunnable waitForCurrentSlide = new WaitSlideRunnable();
 
     // Simply show the next slide (for use with slideHandler.postDelayed)
     private Runnable moveToNextSlide = new Runnable() {
@@ -147,12 +163,14 @@ public class SlideShowView extends RelativeLayout implements View.OnClickListene
         int playlistType = a.getInteger(R.styleable.SlideShowView_playlist, 1);
         long slideDuration = a.getInteger(R.styleable.SlideShowView_slideDuration, (int) SequentialPlayList.DEFAULT_SLIDE_DURATION);
         boolean loop = a.getBoolean(R.styleable.SlideShowView_loop, true);
+        boolean autoAdvance = a.getBoolean(R.styleable.SlideShowView_enableAutoAdvance, true);
 
         switch (playlistType) {
             case 2: {
                 RandomPlayList pl = new RandomPlayList();
                 pl.setLooping(loop);
                 pl.setSlideDuration(slideDuration);
+                pl.setAutoAdvanceEnabled(autoAdvance);
                 setPlaylist(pl);
                 break;
             }
@@ -161,6 +179,7 @@ public class SlideShowView extends RelativeLayout implements View.OnClickListene
                 SequentialPlayList pl = new SequentialPlayList();
                 pl.setLooping(loop);
                 pl.setSlideDuration(slideDuration);
+                pl.setAutoAdvanceEnabled(autoAdvance);
                 setPlaylist(pl);
             }
         }
@@ -401,8 +420,26 @@ public class SlideShowView extends RelativeLayout implements View.OnClickListene
      * Move to the next slide
      */
     public void next() {
-        getPlaylist().next();
-        playCurrentSlide();
+        final PlayList pl = getPlaylist();
+
+        final int previousPosition = pl.getCurrentSlide();
+        pl.next();
+        final int currentPosition = pl.getCurrentSlide();
+
+        playSlide(currentPosition, previousPosition);
+    }
+
+    /**
+     * Move to the previous slide
+     */
+    public void previous() {
+        final PlayList pl = getPlaylist();
+
+        final int previousPosition = pl.getCurrentSlide();
+        pl.previous();
+        final int currentPosition = pl.getCurrentSlide();
+
+        playSlide(currentPosition, previousPosition);
     }
 
     /**
@@ -417,6 +454,55 @@ public class SlideShowView extends RelativeLayout implements View.OnClickListene
         // TODO Use the out transition to hide the current view
         // Hide all visible views
         removeAllViews();
+        recycledViews.clear();
+    }
+
+    /**
+     * Pause the slide show
+     */
+    public void pause() {
+        switch (status) {
+            case PAUSED:
+            case STOPPED:
+                return;
+
+            case PLAYING:
+                status = Status.PAUSED;
+
+                // Remove all callbacks
+                slideHandler.removeCallbacksAndMessages(null);
+        }
+    }
+
+    /**
+     * Resume the slideshow
+     */
+    public void resume() {
+        switch (status) {
+            case PLAYING:
+                return;
+
+            case STOPPED:
+                play();
+                return;
+
+            default:
+                status = Status.PLAYING;
+
+                PlayList pl = getPlaylist();
+                if (pl.isAutoAdvanceEnabled()) {
+                    slideHandler.removeCallbacks(moveToNextSlide);
+                    slideHandler.postDelayed(moveToNextSlide, pl.getSlideDuration(pl.getCurrentSlide()));
+                }
+        }
+    }
+
+    /**
+     * If playing, pauses the slideshow. Else, resumes it.
+     */
+    public void togglePause() {
+        if (status == Status.PLAYING) pause();
+        else resume();
     }
 
     /**
@@ -424,13 +510,12 @@ public class SlideShowView extends RelativeLayout implements View.OnClickListene
      * move to the next one. If that slide is loading, we wait until it is ready and then we play
      * it.
      */
-    protected void playCurrentSlide() {
+    protected void playSlide(int currentPosition, int previousPosition) {
+        final SlideStatus slideStatus = adapter.getSlideStatus(currentPosition);
         final PlayList pl = getPlaylist();
-        final int position = pl.getCurrentSlide();
-        final SlideStatus slideStatus = adapter.getSlideStatus(position);
 
         // Don't play anything if we have reached the end
-        if (position < 0) {
+        if (currentPosition < 0) {
             stop();
             return;
         }
@@ -447,15 +532,17 @@ public class SlideShowView extends RelativeLayout implements View.OnClickListene
                 status = Status.PLAYING;
 
                 // Schedule next slide
-                slideHandler.postDelayed(moveToNextSlide, pl.getSlideDuration(position));
+                if (pl.isAutoAdvanceEnabled()) {
+                    slideHandler.postDelayed(moveToNextSlide, pl.getSlideDuration(currentPosition));
+                }
 
                 // Display the slide
-                displayCurrentSlide();
+                displaySlide(currentPosition, previousPosition);
 
                 break;
 
             case NOT_AVAILABLE:
-                Log.w("SlideShowView", "Slide is not available: " + position);
+                Log.w("SlideShowView", "Slide is not available: " + currentPosition);
 
                 // Stop if we have already skipped all slides
                 ++notAvailableSlidesSkipped;
@@ -469,20 +556,16 @@ public class SlideShowView extends RelativeLayout implements View.OnClickListene
                 break;
 
             case LOADING:
-                Log.d("SlideShowView", "Slide is not yet ready, waiting for it: " + position);
+                Log.d("SlideShowView", "Slide is not yet ready, waiting for it: " + currentPosition);
 
                 // Show an indicator to the user
                 showProgressIndicator();
 
                 // Start waiting for the slide to be available
-                slideHandler.post(waitForCurrentSlide);
+                waitForCurrentSlide.startWaiting(currentPosition, previousPosition);
 
                 break;
         }
-
-        // Slide is loading, we show the progress indicator and wait for it before making the
-        // transition
-
     }
 
     /**
@@ -504,10 +587,7 @@ public class SlideShowView extends RelativeLayout implements View.OnClickListene
     /**
      * Display the view for the given slide, launching the appropriate transitions if available
      */
-    private void displayCurrentSlide() {
-        final PlayList pl = getPlaylist();
-        final int currentPosition = pl.getCurrentSlide();
-        final int previousPosition = pl.getPreviousSlide();
+    private void displaySlide(final int currentPosition, final int previousPosition) {
 
         Log.v("SlideShowView", "Displaying slide at position: " + currentPosition);
 
