@@ -7,7 +7,7 @@ import android.view.animation.Interpolator;
 import com.marvinlabs.widget.slideshow.SlideShowView;
 
 /**
- * A transition maker to fade the slides in and out
+ * A transition maker to slide out left and zoom in
  * <p/>
  * Created by Vincent Mimoun-Prat @ MarvinLabs on 28/05/2014.
  */
@@ -61,7 +61,6 @@ public class SlideAndZoomTransitionFactory extends BaseTransitionFactory {
 
     @Override
     public ViewPropertyAnimator getOutAnimator(View target, SlideShowView parent, int fromSlide, int toSlide) {
-        target.setAlpha(1);
         return target.animate().setDuration(getDuration()).setInterpolator(getInterpolator()).alpha(0).translationX(-parent.getWidth());
     }
 

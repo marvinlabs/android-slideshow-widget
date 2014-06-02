@@ -61,7 +61,6 @@ public class FadeTransitionFactory extends BaseTransitionFactory {
 
     @Override
     public ViewPropertyAnimator getOutAnimator(View target, SlideShowView parent, int fromSlide, int toSlide) {
-        target.setAlpha(1);
         return target.animate().setDuration(getDuration()).setInterpolator(getInterpolator()).alpha(0);
     }
 }

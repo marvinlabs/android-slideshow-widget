@@ -25,6 +25,10 @@ public class RandomTransitionFactory extends BaseTransitionFactory {
 
     private SlideTransitionFactory currentFactory;
 
+    static {
+        RAND.setSeed(System.currentTimeMillis());
+    }
+
     //==============================================================================================
     // GENERAL METHODS
     //==
@@ -58,6 +62,7 @@ public class RandomTransitionFactory extends BaseTransitionFactory {
         factories.add(new FadeTransitionFactory(getDuration(), getInterpolator()));
         factories.add(new ZoomTransitionFactory(getDuration(), getInterpolator()));
         factories.add(new SlideAndZoomTransitionFactory(getDuration(), getInterpolator()));
+        factories.add(new FlipTransitionFactory(getDuration(), getInterpolator()));
     }
 
     //==============================================================================================
