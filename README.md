@@ -109,6 +109,13 @@ get updates about our work, you can also:
 
 ## Change log
 
+### 0.3.0 (2014-06-02)
+
+  - [new] new transition factories
+  - [new] playback control function (next, previous, pause, resume)
+  - [new] widget can be configured from XML
+  - [fix] issue #2
+
 ### 0.2.0 (2014-06-01)
 
   - [new] a RandomPlayList implementation
