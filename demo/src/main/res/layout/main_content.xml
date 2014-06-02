@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context="com.marvinlabs.widget.slideshow.demo.SlideShowActivity">
+
+    <com.marvinlabs.widget.slideshow.SlideShowView
+        android:id="@+id/slideshow"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_above="@+id/slide_text"/>
+
+    <TextView android:id="@+id/slide_text"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textSize="16sp"
+        android:padding="20dp"
+        android:gravity="center"
+        android:layout_alignParentBottom="true"
+        tools:text="Current slide: 0"/>
+
+</RelativeLayout>

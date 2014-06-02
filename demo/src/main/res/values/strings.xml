@@ -4,5 +4,9 @@
     <string name="app_name">SlideShow Widget</string>
     <string name="title_activity_slideshow">SlideShow</string>
     <string name="action_settings">Settings</string>
+    <string name="current_slide">Current slide: %1$s</string>
+    <string name="slide_duration">Slide duration:</string>
+    <string name="playlist_type">Playlist behaviour:</string>
+    <string name="transition_type">Transition:</string>
 
 </resources>
