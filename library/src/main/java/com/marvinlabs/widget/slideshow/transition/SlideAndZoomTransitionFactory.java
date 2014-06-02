@@ -59,9 +59,9 @@ public class SlideAndZoomTransitionFactory extends BaseTransitionFactory {
         target.setRotationX(0);
         target.setRotationY(0);
 
-        final PropertyValuesHolder translationX = PropertyValuesHolder.ofFloat(View.TRANSLATION_X, parent.getWidth(), 0);
-        final PropertyValuesHolder scaleX = PropertyValuesHolder.ofFloat(View.SCALE_X, 0.5f, 0.5f, 1.0f);
-        final PropertyValuesHolder scaleY = PropertyValuesHolder.ofFloat(View.SCALE_Y, 0.5f, 0.5f, 1.0f);
+        final PropertyValuesHolder translationX = PropertyValuesHolder.ofFloat(View.TRANSLATION_X, parent.getWidth(), parent.getWidth()/3, 0);
+        final PropertyValuesHolder scaleX = PropertyValuesHolder.ofFloat(View.SCALE_X, 0.5f, 0.6f, 1.0f);
+        final PropertyValuesHolder scaleY = PropertyValuesHolder.ofFloat(View.SCALE_Y, 0.5f, 0.6f, 1.0f);
         final PropertyValuesHolder alpha = PropertyValuesHolder.ofFloat(View.ALPHA, 0, 1, 1);
 
         ObjectAnimator animator = ObjectAnimator.ofPropertyValuesHolder(target, translationX, scaleX, scaleY, alpha);
@@ -73,9 +73,9 @@ public class SlideAndZoomTransitionFactory extends BaseTransitionFactory {
 
     @Override
     public Animator getOutAnimator(View target, SlideShowView parent, int fromSlide, int toSlide) {
-        final PropertyValuesHolder translationX = PropertyValuesHolder.ofFloat(View.TRANSLATION_X, 0, parent.getWidth());
-        final PropertyValuesHolder scaleX = PropertyValuesHolder.ofFloat(View.SCALE_X, 1.0f, 0.5f, 0.5f);
-        final PropertyValuesHolder scaleY = PropertyValuesHolder.ofFloat(View.SCALE_Y, 1.0f, 0.5f, 0.5f);
+        final PropertyValuesHolder translationX = PropertyValuesHolder.ofFloat(View.TRANSLATION_X, 0, -parent.getWidth()/3, -parent.getWidth());
+        final PropertyValuesHolder scaleX = PropertyValuesHolder.ofFloat(View.SCALE_X, 1.0f, 0.6f, 0.5f);
+        final PropertyValuesHolder scaleY = PropertyValuesHolder.ofFloat(View.SCALE_Y, 1.0f, 0.6f, 0.5f);
         final PropertyValuesHolder alpha = PropertyValuesHolder.ofFloat(View.ALPHA, 1, 1, 0);
 
         ObjectAnimator animator = ObjectAnimator.ofPropertyValuesHolder(target, translationX, scaleX, scaleY, alpha);
