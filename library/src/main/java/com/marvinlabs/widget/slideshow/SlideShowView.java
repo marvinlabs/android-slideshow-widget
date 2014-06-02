@@ -543,6 +543,8 @@ public class SlideShowView extends RelativeLayout implements View.OnClickListene
      * Show the progress indicator when a slide is being loaded
      */
     protected void showProgressIndicator() {
+        removeView(progressIndicator);
+
         progressIndicator.setAlpha(0);
         addView(progressIndicator);
         progressIndicator.animate().alpha(1).setDuration(500).start();

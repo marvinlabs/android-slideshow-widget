@@ -50,9 +50,12 @@ public class SlideAndZoomTransitionFactory extends BaseTransitionFactory {
     @Override
     public ViewPropertyAnimator getInAnimator(View target, SlideShowView parent, int fromSlide, int toSlide) {
         target.setAlpha(0);
-        target.setScaleX(0);
-        target.setScaleY(0);
+        target.setScaleX(1);
+        target.setScaleY(1);
         target.setTranslationX(0);
+        target.setTranslationY(0);
+        target.setRotationX(0);
+        target.setRotationY(0);
         return target.animate().setDuration(getDuration()).setInterpolator(getInterpolator()).alpha(1).scaleX(1).scaleY(1);
     }
 
