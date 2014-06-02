@@ -89,7 +89,7 @@ uploadArchives {
             beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
 
             repository(url: getSonatypeRepositoryUrl()) {
-                authentication(userName: sonatypeUser, password: sonatypePassword)
+                authentication(userName: getSonatypeUser(), password: getSonatypePassword())
             }
 
             pom.project {
