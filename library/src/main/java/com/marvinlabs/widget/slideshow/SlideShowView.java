@@ -517,6 +517,9 @@ public class SlideShowView extends RelativeLayout implements View.OnClickListene
         // Add the slide view to our hierarchy
         final View inView = getSlideView(currentPosition);
         inView.setVisibility(View.INVISIBLE);
+        if(inView.getParent() != null) {
+            removeView(inView);
+        }
         addView(inView);
 
         // Notify that the slide is about to be shown
