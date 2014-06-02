@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="duration_string_array">
+        <item>2 seconds</item>
+        <item>5 seconds</item>
+        <item>10 seconds</item>
+    </string-array>
+
+    <integer-array name="duration_array">
+        <item>2000</item>
+        <item>5000</item>
+        <item>10000</item>
+    </integer-array>
+
+    <string-array name="playlist_types">
+        <item>Sequential</item>
+        <item>Random</item>
+    </string-array>
+
+    <string-array name="transitions">
+        <item>None</item>
+        <item>Fade</item>
+        <item>Slide and zoom</item>
+    </string-array>
+</resources>

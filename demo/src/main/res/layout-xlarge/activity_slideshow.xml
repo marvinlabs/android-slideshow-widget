@@ -4,7 +4,10 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <include layout="@layout/main_content"></include>
+    <include layout="@layout/main_content"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_marginLeft="240dp"></include>
 
     <include layout="@layout/menu_container"></include>
 
