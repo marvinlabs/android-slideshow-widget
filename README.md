@@ -21,7 +21,7 @@ The easiest way to get the library included in your project is by using Gradle. 
 following line to your dependencies block:
 
     dependencies {
-        compile 'com.marvinlabs:android-slideshow-widget:0.1.+@aar'
+        compile 'com.marvinlabs:android-slideshow-widget:0.4.+@aar'
     }
     
 Of course, you can replace the version number by whichever version you need (you can have a look at 
@@ -65,7 +65,14 @@ To get you started with picture slide shows, we have created a few useful adapte
   - `ResourceBitmapAdapter` will allow you to show a list of application resource drawables
   - `RemoteBitmapAdapter` will allow you to show a list of images that are loaded from the 
     Internet.
-   
+    
+We also have a Picasso plugin library. That provides an adapter that works with Picasso instead of
+AsyncTasks. To use it, simply add the corresponding dependency using gradle:
+
+    dependencies {
+        compile 'com.marvinlabs:android-slideshow-widget-picasso-plugin:0.4.+@aar'
+    }
+    
 ### SlideTransitionFactory
 
 You want something else than just a fade between slides? Simply implement this interface to return 
@@ -108,6 +115,10 @@ get updates about our work, you can also:
 * [Follow us on Facebook](http://www.facebook.com/studio.marvinlabs)
 
 ## Change log
+
+### 0.4.0 (2014-06-03)
+
+  - [new] added a Picasso plugin (an adapter to use Picasso to load remote images)
 
 ### 0.3.0 (2014-06-02)
 
