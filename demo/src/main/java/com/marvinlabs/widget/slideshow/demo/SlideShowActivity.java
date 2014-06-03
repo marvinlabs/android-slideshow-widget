@@ -56,6 +56,7 @@ public class SlideShowActivity extends Activity {
         Picasso.with(this).setLoggingEnabled(true);
 
         String[] slideUrls = new String[]{
+                "http://www.marvinlabs.com/wp-content/uploads/2013/10/logo.png",
                 "http://lorempixel.com/1280/720/sports",
                 "http://lorempixel.com/1280/720/nature",
                 "http://lorempixel.com/1280/720/people",
@@ -83,21 +84,23 @@ public class SlideShowActivity extends Activity {
     protected void onStop() {
         if (adapter instanceof RemoteBitmapAdapter) {
             ((RemoteBitmapAdapter) adapter).stopAllDownloads();
+        } else if (adapter instanceof ResourceBitmapAdapter) {
+            ((ResourceBitmapAdapter) adapter).stopAllDownloads();
         } else if (adapter instanceof PicassoBitmapAdapter) {
-            Picasso.with(this).shutdown();
+            // Not necessary with the singleton usage
+            // Picasso.with(this).shutdown();
         }
         super.onStop();
     }
 
     private void startSlideShow() {
         // Create an adapter
-        slideShowView.setAdapter(createResourceAdapter());
-        // slideShowView.setAdapter(createRemoteAdapter());
+        // slideShowView.setAdapter(createResourceAdapter());
+        slideShowView.setAdapter(createRemoteAdapter());
         // slideShowView.setAdapter(createPicassoAdapter());
 
         // Optional customisation follows
         // slideShowView.setTransitionFactory(new RandomTransitionFactory());
-        // slideShowView.setTransitionFactory(new FlipTransitionFactory());
         // slideShowView.setPlaylist(new RandomPlayList());
 
         // Some listeners if needed
