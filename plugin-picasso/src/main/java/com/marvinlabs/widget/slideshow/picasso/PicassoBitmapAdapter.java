@@ -3,9 +3,11 @@ package com.marvinlabs.widget.slideshow.picasso;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
+import android.util.SparseArray;
 
 import com.marvinlabs.widget.slideshow.adapter.BitmapAdapter;
 import com.squareup.picasso.Picasso;
+import com.squareup.picasso.RequestCreator;
 import com.squareup.picasso.Target;
 
 import java.util.ArrayList;
@@ -24,6 +26,9 @@ public class PicassoBitmapAdapter extends BitmapAdapter {
     // URLs of the images to load
     private List<String> slideUrls;
 
+    // Targets currently in use by Picasso
+    private SparseArray<SlideTarget> activeTargets;
+
     //==============================================================================================
     // GENERAL METHODS
     //==
@@ -37,6 +42,7 @@ public class PicassoBitmapAdapter extends BitmapAdapter {
     public PicassoBitmapAdapter(Context context, Collection<String> slideUrls) {
         super(context);
         this.slideUrls = new ArrayList<String>(slideUrls);
+        this.activeTargets = new SparseArray<SlideTarget>(3);
     }
 
     //==============================================================================================
@@ -62,25 +68,72 @@ public class PicassoBitmapAdapter extends BitmapAdapter {
     // BITMAP LOADING
     //==
 
+    /**
+     * Stop all running download tasks. This method should be called when your activity gets
+     * stopped (in {#onStop})
+     */
+    public void shutdown() {
+        activeTargets.clear();
+    }
+
+    @Override
+    protected void onBitmapLoaded(int position, Bitmap bitmap) {
+        activeTargets.remove(position);
+        super.onBitmapLoaded(position, bitmap);
+    }
+
+    @Override
+    protected void onBitmapNotAvailable(int position) {
+        activeTargets.remove(position);
+        super.onBitmapNotAvailable(position);
+    }
+
     @Override
     protected void loadBitmap(final int position) {
         if (position < 0 || position >= slideUrls.size()) onBitmapNotAvailable(position);
 
-        Picasso.with(getContext()).load(slideUrls.get(position)).noFade().into(new Target() {
-            @Override
-            public void onBitmapLoaded(Bitmap bitmap, Picasso.LoadedFrom loadedFrom) {
-                PicassoBitmapAdapter.this.onBitmapLoaded(position, bitmap);
-            }
+        SlideTarget target = new SlideTarget(position);
+        activeTargets.put(position, target);
 
-            @Override
-            public void onBitmapFailed(Drawable drawable) {
-                PicassoBitmapAdapter.this.onBitmapNotAvailable(position);
-            }
+        RequestCreator rc = createRequestCreator(Picasso.with(getContext()), slideUrls.get(position));
+        rc.into(target);
+    }
 
-            @Override
-            public void onPrepareLoad(Drawable drawable) {
-            }
-        });
+    /**
+     * Create the Picasso request. Subclasses can customize it by simply overriding this method. By
+     * default, we use noFade() and skipMemoryCache()
+     *
+     * @param picasso The picasse instance to use
+     * @param url     The URL of the image to load
+     * @return The request creator object from Picasso
+     */
+    protected RequestCreator createRequestCreator(Picasso picasso, String url) {
+        return picasso.load(url).noFade().skipMemoryCache();
+    }
+
+    /**
+     * A target for Picasso to load the bitmap into
+     */
+    private class SlideTarget implements Target {
+        int position;
+
+        private SlideTarget(int position) {
+            this.position = position;
+        }
+
+        @Override
+        public void onBitmapLoaded(Bitmap bitmap, com.squareup.picasso.Picasso.LoadedFrom loadedFrom) {
+            PicassoBitmapAdapter.this.onBitmapLoaded(position, bitmap);
+        }
+
+        @Override
+        public void onBitmapFailed(Drawable drawable) {
+            PicassoBitmapAdapter.this.onBitmapNotAvailable(position);
+        }
+
+        @Override
+        public void onPrepareLoad(Drawable drawable) {
+        }
     }
 
 }

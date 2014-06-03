@@ -10,7 +10,7 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         app:enableAutoAdvance="true"
-        app:playlist="random"
+        app:playlist="sequential"
         app:slideDuration="5000"
         app:transition="slideAndZoom"
         app:transitionDuration="750"/>
