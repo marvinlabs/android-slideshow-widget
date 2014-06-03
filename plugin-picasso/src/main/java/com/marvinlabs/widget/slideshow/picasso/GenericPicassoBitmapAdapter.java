@@ -15,16 +15,17 @@ import java.util.Collection;
 import java.util.List;
 
 /**
- * A BitmapAdapter that loads them from the Internet using AsyncTasks. Don't forget to call the
- * adapter's #stopAllDownloads method when the activity gets stopped. Failing to do so may leave you with
- * running AsyncTask instances.
+ * A BitmapAdapter that loads them from the Internet using the Picasso library. The only work left
+ * to do is to override the {#createRequestCreator} method. If your items are URLs or resource IDs,
+ * you can use our respective basic implementations: PicassoRemoteBitmapAdapter or
+ * PicassoRessourceBitmapAdapter
  * <p/>
  * Created by Vincent Mimoun-Prat @ MarvinLabs on 29/05/2014.
  */
-public class PicassoBitmapAdapter extends BitmapAdapter {
+public abstract class GenericPicassoBitmapAdapter<T> extends BitmapAdapter {
 
     // URLs of the images to load
-    private List<String> slideUrls;
+    private List<T> items;
 
     // Targets currently in use by Picasso
     private SparseArray<SlideTarget> activeTargets;
@@ -36,12 +37,12 @@ public class PicassoBitmapAdapter extends BitmapAdapter {
     /**
      * Constructor
      *
-     * @param context   The context in which the adapter is created (activity)
-     * @param slideUrls The URLs of the images to load
+     * @param context The context in which the adapter is created (activity)
+     * @param items   The URLs of the images to load
      */
-    public PicassoBitmapAdapter(Context context, Collection<String> slideUrls) {
+    public GenericPicassoBitmapAdapter(Context context, Collection<T> items) {
         super(context);
-        this.slideUrls = new ArrayList<String>(slideUrls);
+        this.items = new ArrayList<T>(items);
         this.activeTargets = new SparseArray<SlideTarget>(3);
     }
 
@@ -51,12 +52,12 @@ public class PicassoBitmapAdapter extends BitmapAdapter {
 
     @Override
     public int getCount() {
-        return slideUrls.size();
+        return items.size();
     }
 
     @Override
-    public String getItem(int position) {
-        return slideUrls.get(position);
+    public T getItem(int position) {
+        return items.get(position);
     }
 
     @Override
@@ -74,6 +75,9 @@ public class PicassoBitmapAdapter extends BitmapAdapter {
      */
     public void shutdown() {
         activeTargets.clear();
+
+        // Not necessary with the singleton usage
+        // Picasso.with(this).shutdown();
     }
 
     @Override
@@ -90,26 +94,24 @@ public class PicassoBitmapAdapter extends BitmapAdapter {
 
     @Override
     protected void loadBitmap(final int position) {
-        if (position < 0 || position >= slideUrls.size()) onBitmapNotAvailable(position);
+        if (position < 0 || position >= items.size()) onBitmapNotAvailable(position);
 
         SlideTarget target = new SlideTarget(position);
         activeTargets.put(position, target);
 
-        RequestCreator rc = createRequestCreator(Picasso.with(getContext()), slideUrls.get(position));
+        RequestCreator rc = createRequestCreator(Picasso.with(getContext()), items.get(position));
         rc.into(target);
     }
 
     /**
      * Create the Picasso request. Subclasses can customize it by simply overriding this method. By
-     * default, we use noFade() and skipMemoryCache()
+     * default, we could use noFade() and skipMemoryCache()
      *
-     * @param picasso The picasse instance to use
-     * @param url     The URL of the image to load
+     * @param picasso The picasso instance to use
+     * @param item    The item for which to load the image
      * @return The request creator object from Picasso
      */
-    protected RequestCreator createRequestCreator(Picasso picasso, String url) {
-        return picasso.load(url).noFade().skipMemoryCache();
-    }
+    protected abstract RequestCreator createRequestCreator(Picasso picasso, T item);
 
     /**
      * A target for Picasso to load the bitmap into
@@ -122,13 +124,13 @@ public class PicassoBitmapAdapter extends BitmapAdapter {
         }
 
         @Override
-        public void onBitmapLoaded(Bitmap bitmap, com.squareup.picasso.Picasso.LoadedFrom loadedFrom) {
-            PicassoBitmapAdapter.this.onBitmapLoaded(position, bitmap);
+        public void onBitmapLoaded(Bitmap bitmap, Picasso.LoadedFrom loadedFrom) {
+            GenericPicassoBitmapAdapter.this.onBitmapLoaded(position, bitmap);
         }
 
         @Override
         public void onBitmapFailed(Drawable drawable) {
-            PicassoBitmapAdapter.this.onBitmapNotAvailable(position);
+            GenericPicassoBitmapAdapter.this.onBitmapNotAvailable(position);
         }
 
         @Override

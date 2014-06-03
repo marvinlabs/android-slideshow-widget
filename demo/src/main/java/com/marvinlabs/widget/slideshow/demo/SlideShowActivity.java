@@ -12,9 +12,11 @@ import android.widget.Toast;
 
 import com.marvinlabs.widget.slideshow.SlideShowAdapter;
 import com.marvinlabs.widget.slideshow.SlideShowView;
+import com.marvinlabs.widget.slideshow.adapter.GenericBitmapAdapter;
 import com.marvinlabs.widget.slideshow.adapter.RemoteBitmapAdapter;
 import com.marvinlabs.widget.slideshow.adapter.ResourceBitmapAdapter;
-import com.marvinlabs.widget.slideshow.picasso.PicassoBitmapAdapter;
+import com.marvinlabs.widget.slideshow.picasso.GenericPicassoBitmapAdapter;
+import com.marvinlabs.widget.slideshow.picasso.PicassoRemoteBitmapAdapter;
 import com.squareup.picasso.Picasso;
 
 import java.util.Arrays;
@@ -62,15 +64,15 @@ public class SlideShowActivity extends Activity {
                 "http://lorempixel.com/1280/720/people",
                 "http://lorempixel.com/1280/720/city",
         };
-        adapter = new PicassoBitmapAdapter(this, Arrays.asList(slideUrls));
+        adapter = new PicassoRemoteBitmapAdapter(this, Arrays.asList(slideUrls));
         return adapter;
     }
 
     private SlideShowAdapter createResourceAdapter() {
-        int[] slideResources = new int[]{R.raw.slide_01, R.raw.slide_02, R.raw.slide_03, R.raw.slide_04};
+        Integer[] slideResources = new Integer[]{R.raw.slide_01, R.raw.slide_02, R.raw.slide_03, R.raw.slide_04};
         BitmapFactory.Options opts = new BitmapFactory.Options();
         opts.inSampleSize = 2;
-        adapter = new ResourceBitmapAdapter(this, slideResources, opts);
+        adapter = new ResourceBitmapAdapter(this, Arrays.asList(slideResources), opts);
         return adapter;
     }
 
@@ -82,13 +84,10 @@ public class SlideShowActivity extends Activity {
 
     @Override
     protected void onStop() {
-        if (adapter instanceof RemoteBitmapAdapter) {
-            ((RemoteBitmapAdapter) adapter).stopAllDownloads();
-        } else if (adapter instanceof ResourceBitmapAdapter) {
-            ((ResourceBitmapAdapter) adapter).stopAllDownloads();
-        } else if (adapter instanceof PicassoBitmapAdapter) {
-            // Not necessary with the singleton usage
-            // Picasso.with(this).shutdown();
+        if (adapter instanceof GenericBitmapAdapter) {
+            ((GenericBitmapAdapter) adapter).shutdown();
+        } else if (adapter instanceof GenericPicassoBitmapAdapter) {
+            ((GenericPicassoBitmapAdapter) adapter).shutdown();
         }
         super.onStop();
     }
