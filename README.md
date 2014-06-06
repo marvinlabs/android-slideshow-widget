@@ -116,8 +116,9 @@ get updates about our work, you can also:
 
 ## Change log
 
-### 0.4.0 (2014-06-03)
+### 0.5.0 (2014-06-03)
 
+  - [new] making the adapters more generic so that they can easily be used with existing data
   - [new] added a Picasso plugin (an adapter to use Picasso to load remote images)
 
 ### 0.3.0 (2014-06-02)
