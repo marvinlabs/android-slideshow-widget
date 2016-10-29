@@ -538,7 +538,7 @@ public class SlideShowView extends RelativeLayout implements View.OnClickListene
 
                 // Display the slide
                 displaySlide(currentPosition, previousPosition);
-
+		prepareSlide(pl.getNextSlide());
                 break;
 
             case NOT_AVAILABLE:
