@@ -18,7 +18,7 @@ android {
     }
 
     defaultConfig {
-        packageName "com.marvinlabs.widget.slideshow.demo"
+        applicationId "com.marvinlabs.widget.slideshow.demo"
         minSdkVersion 14
         targetSdkVersion 19
         versionCode getAppVersionCode()
